@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "title": "봄 소풍",
+    "content": "오늘은 벚꽃이 만개한 공원에서 소풍을 즐겼다.",
+    "date": "2024-04-10",
+    "authorId": "mock-uuid-user-1",
+    "image": "/images/cat-king.png"
+  },
+  {
+    "id": 2,
+    "title": "비 오는 날",
+    "content": "창밖을 보며 따뜻한 커피 한 잔을 마셨다.",
+    "date": "2024-04-11",
+    "authorId": "mock-uuid-user-2",
+    "image": "/images/city-night.png"
+  },
+  {
+    "id": 3,
+    "title": "친구와의 만남",
+    "content": "오랜만에 친구를 만나 즐거운 시간을 보냈다.",
+    "date": "2024-04-12",
+    "authorId": "mock-uuid-user-1",
+    "image": "/images/night-street.png"
+  }
+] 

@@ -1,0 +1,28 @@
+[
+  {
+    "id": "1",
+    "type": "like",
+    "message": "홍길동님이 당신의 일기를 좋아합니다.",
+    "createdAt": "2024-03-15T10:30:00Z",
+    "read": false,
+    "userId": "user1",
+    "diaryId": "diary1"
+  },
+  {
+    "id": "2",
+    "type": "comment",
+    "message": "김철수님이 당신의 일기에 댓글을 남겼습니다.",
+    "createdAt": "2024-03-15T09:15:00Z",
+    "read": true,
+    "userId": "user2",
+    "diaryId": "diary2"
+  },
+  {
+    "id": "3",
+    "type": "follow",
+    "message": "이영희님이 당신을 팔로우하기 시작했습니다.",
+    "createdAt": "2024-03-14T15:45:00Z",
+    "read": false,
+    "userId": "user3"
+  }
+] 

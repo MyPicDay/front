@@ -1,0 +1,32 @@
+[
+  {
+    "id": "1",
+    "followerId": "mock-uuid-user-2",
+    "followingId": "mock-uuid-user-1",
+    "createdAt": "2024-05-01T10:30:00Z"
+  },
+  {
+    "id": "2",
+    "followerId": "f6a8c126-b606-4677-979a-f45be30ab10d",
+    "followingId": "mock-uuid-user-1",
+    "createdAt": "2024-05-02T14:20:00Z"
+  },
+  {
+    "id": "3",
+    "followerId": "mock-uuid-user-1",
+    "followingId": "mock-uuid-user-2",
+    "createdAt": "2024-05-03T09:15:00Z"
+  },
+  {
+    "id": "4",
+    "followerId": "mock-uuid-user-1",
+    "followingId": "f6a8c126-b606-4677-979a-f45be30ab10d",
+    "createdAt": "2024-05-04T16:45:00Z"
+  },
+  {
+    "id": "5",
+    "followerId": "f6a8c126-b606-4677-979a-f45be30ab10d",
+    "followingId": "mock-uuid-user-2",
+    "createdAt": "2024-05-05T11:10:00Z"
+  }
+] 

@@ -18,6 +18,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: '이메일 또는 비밀번호가 잘못되었습니다.' }, { status: 401 });
     }
 
+    console.log('user', user);
     // 로그인 성공 시, 사용자 정보와 함께 임시 토큰 반환
     // 실제 앱에서는 JWT 토큰 등을 생성하여 반환합니다.
     const mockToken = `mock-jwt-token-for-${user.id}-${Date.now()}`;

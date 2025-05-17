@@ -9,8 +9,9 @@ async function getDiary(id: string) {
   return res.json();
 }
 
-export default async function DiaryDetailPage({ params }: { params: { id: string } }) {
-  const diary = await getDiary(params.id);
+export default async function DiaryDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const diary = await getDiary(id);
   
   if (!diary || diary.message) { // Check for not found message
     return (

@@ -4,9 +4,11 @@ export const revalidate = 0;
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const diaryId = parseInt(params.id);
+  const { id } = await params;
+  console.log('Received params.id:', id);
+  const diaryId = parseInt(id);
   const diary = diaries.find((d) => d.id === diaryId);
 
   if (diary) {

@@ -40,7 +40,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
   
   // 랜덤 이름 (실제로는 API에서 가져온 데이터 사용)
   const authorName = diary.author?.name || "홍길동";
-  const profileImage = diary.author?.image || "/images/profile-default.png";
+  const profileImage = diary.author?.image || "/images/cat-king.png";
   
   return (
     <article className="bg-white dark:bg-zinc-900 rounded-xl shadow-md mb-6 overflow-hidden">

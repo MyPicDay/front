@@ -3,6 +3,7 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import useAuthStore from '@/lib/store/authStore';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const login = useAuthStore((state) => state.login);
 
   // TODO: Zustand 또는 React Context로 로그인 상태 및 사용자 정보 관리
   // const { login } = useAuthStore(); 
@@ -30,9 +32,9 @@ export default function LoginPage() {
 
       if (response.ok) {
         setMessage('로그인 성공! 메인 페이지로 이동합니다.');
-        // login(data.user, data.token); // Zustand/Context 사용 시
-        console.log('Login successful:', data.user, data.token);
-        setTimeout(() => router.push('/'), 2000);
+        login(data.token, '');
+        console.log('Login successful, token stored. User:', data.user);
+        setTimeout(() => router.push('/'), 1000);
       } else {
         setMessage(data.message || '로그인 중 오류가 발생했습니다.');
       }

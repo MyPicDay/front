@@ -1,33 +1,47 @@
-import { NextResponse } from 'next/server';
-import usersData from '../../../../../lib/data/users.json'; // 실제로는 DB를 사용해야 합니다.
+import { NextRequest } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
-export const revalidate = 0;
+// 타입 정의
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+}
 
-const usersFilePath = path.join(process.cwd(), 'lib', 'data', 'users.json');
-let users = [...usersData]; // 메모리에 사용자 데이터 로드
+// 데이터 파일 경로 및 로드
+const usersDataPath = path.join(process.cwd(), 'lib/data/users.json');
 
-// 특정 사용자 정보 가져오기 (GET)
+// 데이터 로드 함수
+function loadData<T>(filePath: string): T[] {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch (error) {
+    console.error(`Error loading data from ${filePath}:`, error);
+    return [];
+  }
+}
+
+// 사용자 데이터 불러오기
+const users = loadData<User>(usersDataPath);
+
+export const revalidate = 0; // 캐시 비활성화
+
 export async function GET(
-  request: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  try {
-    const userId = params.id;
-    const user = users.find(u => u.id === userId);
-
-    if (!user) {
-      return NextResponse.json({ message: '사용자를 찾을 수 없습니다.' }, { status: 404 });
-    }
-    // 실제 앱에서는 password 같은 민감 정보는 제외하고 반환해야 합니다.
-    const { ...userWithoutPassword } = user; 
-    return NextResponse.json(userWithoutPassword, { status: 200 });
-
-  } catch (error) {
-    console.error(`Error fetching user ${params.id}:`, error);
-    return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
+  // Next.js 15에서는 params를 사용하기 전에 대기해야 함
+  const { id } = await params;
+  
+  // 사용자 정보 조회
+  const user = users.find(user => user.id === id);
+  if (!user) {
+    return Response.json({ message: `사용자(ID: ${id})를 찾을 수 없습니다.` }, { status: 404 });
   }
+  
+  return Response.json(user);
 }
 
 // 특정 사용자 정보 수정하기 (PUT)
@@ -36,17 +50,18 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const userId = params.id;
+    // Next.js 15에서는 params를 사용하기 전에 대기해야 함
+    const { id } = await params;
     const { name, avatar } = await request.json(); // 이메일, 비밀번호 변경은 별도 처리 가정
 
     if (!name && !avatar) {
-      return NextResponse.json({ message: '수정할 내용을 입력해주세요.' }, { status: 400 });
+      return Response.json({ message: '수정할 내용을 입력해주세요.' }, { status: 400 });
     }
 
-    const userIndex = users.findIndex(u => u.id === userId);
+    const userIndex = users.findIndex(u => u.id === id);
 
     if (userIndex === -1) {
-      return NextResponse.json({ message: '사용자를 찾을 수 없습니다.' }, { status: 404 });
+      return Response.json({ message: '사용자를 찾을 수 없습니다.' }, { status: 404 });
     }
 
     // 사용자 정보 업데이트
@@ -56,7 +71,7 @@ export async function PUT(
 
     // users.json 파일 업데이트
     try {
-      fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2), 'utf-8');
+      fs.writeFileSync(usersDataPath, JSON.stringify(users, null, 2), 'utf-8');
     } catch (error) {
       console.error('Failed to write users.json for update:', error);
       // 파일 쓰기 실패 시에도 일단 성공으로 응답 (메모리에는 반영됨)
@@ -64,10 +79,10 @@ export async function PUT(
 
     // 수정된 사용자 정보 반환 (민감 정보 제외)
     const { ...updatedUserWithoutPassword } = users[userIndex];
-    return NextResponse.json({ message: '사용자 정보가 성공적으로 수정되었습니다.', user: updatedUserWithoutPassword }, { status: 200 });
+    return Response.json({ message: '사용자 정보가 성공적으로 수정되었습니다.', user: updatedUserWithoutPassword }, { status: 200 });
 
   } catch (error) {
     console.error(`Error updating user ${params.id}:`, error);
-    return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
+    return Response.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
   }
 } 

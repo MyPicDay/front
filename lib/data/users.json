@@ -3,7 +3,7 @@
     "id": "mock-uuid-user-1",
     "name": "홍길동",
     "email": "hong@example.com",
-    "avatar": "/mockups/avatar1.png"
+    "avatar": "/images/city-night.png"
   },
   {
     "id": "mock-uuid-user-2",

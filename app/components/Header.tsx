@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function Header() {
   const pathname = usePathname();
   const [hasNotification, setHasNotification] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
   
   // 화면 사이즈 상태 (모바일 뷰 감지용)
   const [isMobile, setIsMobile] = useState(false);
@@ -38,7 +40,20 @@ export default function Header() {
     
     // 리사이즈 이벤트 리스너
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+
+    // 외부 클릭 감지
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
   }, []);
 
   return (
@@ -71,8 +86,8 @@ export default function Header() {
           {/* 네비게이션 링크 */}
           <nav className="flex items-center gap-6">
             <Link 
-              href="/calendar" 
-              className={`flex items-center gap-1 font-medium ${pathname === '/calendar' ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300'}`}
+              href="/calendar/mock-uuid-user-1" 
+              className={`flex items-center gap-1 font-medium ${pathname.startsWith('/calendar') ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -120,9 +135,36 @@ export default function Header() {
                 </span>
               )}
             </Link>
-            <Link href="/profile/mock-uuid-user-1" className="w-8 h-8 rounded-full overflow-hidden border-2 border-amber-500">
-              <img src="/mockups/avatar1.png" alt="프로필" className="w-full h-full object-cover" />
-            </Link>
+            <div className="relative" ref={profileMenuRef}>
+              <button 
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                className="w-8 h-8 rounded-full overflow-hidden border-2 border-amber-500 focus:outline-none"
+              >
+                <img src="/images/city-night.png" alt="프로필" className="w-full h-full object-cover" />
+              </button>
+              {isProfileMenuOpen && (
+                <div className="absolute right-0 mt-2 w-30 bg-white rounded-md shadow-lg py-1 z-50 dark:bg-zinc-800">
+                  <Link
+                    href="/settings"
+                    className="block px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-700"
+                    onClick={() => setIsProfileMenuOpen(false)}
+                  >
+                    설정
+                  </Link>
+                  <div className="border-t border-zinc-200 dark:border-zinc-700"></div>
+                  <button
+                    // onClick={handleLogout} // 실제 로그아웃 함수 연결 필요
+                    onClick={() => {
+                      console.log('로그아웃 클릭');
+                      setIsProfileMenuOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-700"
+                  >
+                    로그아웃
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         

@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
@@ -30,38 +30,38 @@ export const revalidate = 0; // 캐시 비활성화
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: any // ✅ 타입 에러 회피용
 ) {
   // Next.js 15에서는 params를 사용하기 전에 대기해야 함
-  const { id } = await params;
+  const { id } = await context.params as { id: string };
   
   // 사용자 정보 조회
   const user = users.find(user => user.id === id);
   if (!user) {
-    return Response.json({ message: `사용자(ID: ${id})를 찾을 수 없습니다.` }, { status: 404 });
+    return NextResponse.json({ message: `사용자(ID: ${id})를 찾을 수 없습니다.` }, { status: 404 });
   }
   
-  return Response.json(user);
+  return NextResponse.json(user);
 }
 
 // 특정 사용자 정보 수정하기 (PUT)
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: any // ✅ 타입 에러 회피용
 ) {
   try {
     // Next.js 15에서는 params를 사용하기 전에 대기해야 함
-    const { id } = await params;
+    const { id } = await context.params as { id: string };
     const { name, avatar } = await request.json(); // 이메일, 비밀번호 변경은 별도 처리 가정
 
     if (!name && !avatar) {
-      return Response.json({ message: '수정할 내용을 입력해주세요.' }, { status: 400 });
+      return NextResponse.json({ message: '수정할 내용을 입력해주세요.' }, { status: 400 });
     }
 
     const userIndex = users.findIndex(u => u.id === id);
 
     if (userIndex === -1) {
-      return Response.json({ message: '사용자를 찾을 수 없습니다.' }, { status: 404 });
+      return NextResponse.json({ message: '사용자를 찾을 수 없습니다.' }, { status: 404 });
     }
 
     // 사용자 정보 업데이트
@@ -79,10 +79,10 @@ export async function PUT(
 
     // 수정된 사용자 정보 반환 (민감 정보 제외)
     const { ...updatedUserWithoutPassword } = users[userIndex];
-    return Response.json({ message: '사용자 정보가 성공적으로 수정되었습니다.', user: updatedUserWithoutPassword }, { status: 200 });
+    return NextResponse.json({ message: '사용자 정보가 성공적으로 수정되었습니다.', user: updatedUserWithoutPassword }, { status: 200 });
 
   } catch (error) {
-    console.error(`Error updating user ${params.id}:`, error);
-    return Response.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
+    console.error(`Error updating user ${context.params.id}:`, error);
+    return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
   }
 } 

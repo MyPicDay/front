@@ -9,6 +9,7 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
+  // TODO: 로그인 후 유저 아이디 가져오기
   const userId = 'mock-uuid-user-1'
   const [hasNotification, setHasNotification] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);

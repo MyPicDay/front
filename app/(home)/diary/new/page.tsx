@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef, ChangeEvent } from 'react';
+import { useState, useRef, ChangeEvent, useEffect } from 'react';
 import Image from 'next/image';
+import { useSearchParams, ReadonlyURLSearchParams } from 'next/navigation';
 
 // 이미지 썸네일 컴포넌트
 interface ImageThumbnailProps {
@@ -267,6 +268,41 @@ const ImageGenerator = ({
   </div>
 );
 
+// 날짜 및 페이지 제목 결정 로직 함수
+const determineDateAndTitle = (searchParams: ReadonlyURLSearchParams): { determinedDate: string; newPageTitle: string } => {
+  const dateParam = searchParams.get('date');
+  
+  const today = new Date();
+  const todayYear = today.getFullYear();
+  const todayMonth = (today.getMonth() + 1).toString().padStart(2, '0');
+  const todayDay = today.getDate().toString().padStart(2, '0');
+  const todayDateStr = `${todayYear}-${todayMonth}-${todayDay}`;
+
+  let determinedDate = todayDateStr;
+  if (dateParam) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+      determinedDate = dateParam;
+    }
+  }
+
+  let newPageTitle = '오늘의 일기';
+  if (determinedDate === todayDateStr) {
+    newPageTitle = '오늘의 일기';
+  } else {
+    const dDate = new Date(determinedDate);
+    const tDate = new Date(todayDateStr);
+    dDate.setHours(0, 0, 0, 0);
+    tDate.setHours(0, 0, 0, 0);
+
+    if (dDate < tDate) {
+      newPageTitle = '지난 일기';
+    } else {
+      newPageTitle = '오늘의 일기';
+    }
+  }
+  return { determinedDate, newPageTitle };
+};
+
 // 메인 페이지 컴포넌트
 export default function DiaryNewPage() {
   const [step, setStep] = useState(1);
@@ -280,6 +316,15 @@ export default function DiaryNewPage() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const searchParams = useSearchParams();
+  const [currentDate, setCurrentDate] = useState('');
+  const [pageTitle, setPageTitle] = useState('오늘의 일기');
+
+  useEffect(() => {
+    const { determinedDate, newPageTitle } = determineDateAndTitle(searchParams);
+    setCurrentDate(determinedDate);
+    setPageTitle(newPageTitle);
+  }, [searchParams]);
 
   // 모든 이미지 (서버 이미지 + 업로드된 이미지)
   const allImages = [...images, ...uploadPreviews];
@@ -416,8 +461,10 @@ export default function DiaryNewPage() {
 
   return (
     <main className="container mx-auto py-8 px-4 max-w-4xl bg-[#FEF4E4] rounded-lg p-6 shadow-md mt-10">
-      <h1 className="text-2xl font-bold text-center mb-8">오늘의 일기</h1>
-      <div className="text-center mb-4 text-xl">2025-05-11</div>
+      <h1 className="text-2xl font-bold text-center mb-8">{pageTitle}</h1>
+      {currentDate && (
+        <div className="text-center mb-4 text-xl">{currentDate}</div>
+      )}
       
       {step === 1 && (
         <DiaryForm

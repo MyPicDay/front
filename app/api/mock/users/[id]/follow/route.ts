@@ -9,11 +9,10 @@ export const revalidate = 0; // 캐시 비활성화
 // 특정 사용자를 팔로우하는 API (POST)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: any // { params: { id: string } } 형태 대신 context 사용
 ) {
-  // params를 await합니다.
-  const awaitedParams = await params;
-  const targetUserId = awaitedParams.id;
+  // context.params를 await하여 id를 추출합니다.
+  const { id: targetUserId } = await context.params as { id: string };
 
   console.log(`[API MOCK] POST /api/mock/users/${targetUserId}/follow`);
 
@@ -36,11 +35,10 @@ export async function POST(
 // 특정 사용자를 언팔로우하는 API (DELETE)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: any // { params: { id: string } } 형태 대신 context 사용
 ) {
-  // params를 await합니다.
-  const awaitedParams = await params;
-  const targetUserId = awaitedParams.id;
+  // context.params를 await하여 id를 추출합니다.
+  const { id: targetUserId } = await context.params as { id: string };
 
   console.log(`[API MOCK] DELETE /api/mock/users/${targetUserId}/follow`);
 

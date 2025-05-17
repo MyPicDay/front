@@ -1,5 +1,5 @@
-import { NextRequest } from 'next/server';
-import fs from 'fs';
+import { NextRequest, NextResponse  } from 'next/server';
+import fs  from 'fs';
 import path from 'path';
 
 // 타입 정의
@@ -50,15 +50,15 @@ export const revalidate = 0; // 캐시 비활성화
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: any // ✅ 타입 에러 회피용
 ) {
-  // Next.js 15에서는 params를 사용하기 전에 대기해야 함
-  const { id } = await params;
+  const { id } = await context.params as { id: string };
+
   
   // 사용자 정보 조회
   const user = users.find(user => user.id === id);
   if (!user) {
-    return Response.json({ message: `사용자(ID: ${id})를 찾을 수 없습니다.` }, { status: 404 });
+    return NextResponse .json({ message: `사용자(ID: ${id})를 찾을 수 없습니다.` }, { status: 404 });
   }
   
   // 작성한 일기 수 계산
@@ -73,7 +73,7 @@ export async function GET(
   const following = followersData.filter(f => f.followerId === id);
   const followingCount = following.length;
   
-  return Response.json({
+  return NextResponse .json({
     user,
     stats: {
       diaryCount,

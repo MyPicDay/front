@@ -5,12 +5,14 @@ import { usePathname } from 'next/navigation';
 
 export default function MobileNav() {
   const pathname = usePathname();
+  // TODO: 로그인 후 유저 아이디 가져오기
+  const userId = 'mock-uuid-user-1';
   
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 border-t border-zinc-200 dark:border-zinc-800 z-50" style={{ backgroundColor: '#FEF4E4' }}>
       <div className="grid grid-cols-5 h-16">
         <Link 
-          href="/calendar" 
+          href={`/calendar/${userId}`}
           className={`flex flex-col items-center justify-center gap-1 ${
             pathname === '/calendar' 
               ? 'text-indigo-600 dark:text-indigo-400' 
@@ -24,7 +26,7 @@ export default function MobileNav() {
         </Link>
         
         <Link 
-          href="/diary" 
+          href={`/diary/${userId}`} 
           className={`flex flex-col items-center justify-center gap-1 ${
             pathname === '/diary' 
               ? 'text-indigo-600 dark:text-indigo-400' 
@@ -38,7 +40,7 @@ export default function MobileNav() {
         </Link>
         
         <Link 
-          href="/diary/new" 
+          href={`/diary/new`} 
           className={`flex flex-col items-center justify-center gap-1 ${
             pathname === '/diary/new' 
               ? 'text-indigo-600 dark:text-indigo-400' 
@@ -52,7 +54,7 @@ export default function MobileNav() {
         </Link>
         
         <Link 
-          href="/profile/mock-uuid-user-1" 
+          href={`/profile/${userId}`} 
           className={`flex flex-col items-center justify-center gap-1 ${
             pathname.startsWith('/profile') 
               ? 'text-indigo-600 dark:text-indigo-400' 

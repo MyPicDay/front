@@ -1,11 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
+import useAuthStore from '@/lib/store/authStore';
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
+  const logout = useAuthStore((state) => state.logout);
+  const userId = 'mock-uuid-user-1'
   const [hasNotification, setHasNotification] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -86,7 +90,7 @@ export default function Header() {
           {/* 네비게이션 링크 */}
           <nav className="flex items-center gap-6">
             <Link 
-              href="/calendar/mock-uuid-user-1" 
+              href={`/calendar/${userId}`} 
               className={`flex items-center gap-1 font-medium ${pathname.startsWith('/calendar') ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -113,7 +117,7 @@ export default function Header() {
               <span className="hidden lg:inline">일기 작성</span>
             </Link>
             <Link 
-              href="/profile/mock-uuid-user-1" 
+              href={`/profile/${userId}`} 
               className={`flex items-center gap-1 font-medium ${pathname.startsWith('/profile') ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -153,9 +157,10 @@ export default function Header() {
                   </Link>
                   <div className="border-t border-zinc-200 dark:border-zinc-700"></div>
                   <button
-                    // onClick={handleLogout} // 실제 로그아웃 함수 연결 필요
                     onClick={() => {
                       console.log('로그아웃 클릭');
+                      logout();
+                      router.push('/login');
                       setIsProfileMenuOpen(false);
                     }}
                     className="block w-full text-left px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-700"

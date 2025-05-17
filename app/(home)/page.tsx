@@ -14,6 +14,7 @@ export default function HomePage() {
     // layout.tsx에서 이미 로그인되지 않은 사용자는 /login으로 리디렉션 처리를 하고 있으므로,
     // 이 page.tsx는 로그인된 사용자의 / 경로 접근 시 리디렉션만 담당합니다.
     if (isLoggedIn) {
+      // TODO: 로그인 후 유저 아이디 가져오기
       const userId = localStorage.getItem('userId') || 'mock-uuid-user-1'; // 사용자 ID는 임시로 localStorage 또는 기본값 사용
       router.replace(`/calendar/${userId}`);
     }

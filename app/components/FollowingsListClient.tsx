@@ -21,9 +21,9 @@ export default function FollowingsListClient({ userId }: FollowingsListClientPro
 
   useEffect(() => {
     const baseUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      (process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`) ||
-      'http://localhost:3000';
+      process.env.NEXT_PUBLIC_API_SERVER_URL || process.env.NEXT_PUBLIC_UNIMPLEMENTED_API_SERVER_URL || 'http://localhost:3000';
+    // TODO: 구현이 끝나면 경로를 변경해주세요
+    // const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
     // userId가 팔로우하는 사람들 목록을 가져옴
     fetch(`${baseUrl}/api/mock/followings/${userId}`)
@@ -51,9 +51,9 @@ export default function FollowingsListClient({ userId }: FollowingsListClientPro
 
      try {
        const baseUrl =
-         process.env.NEXT_PUBLIC_API_BASE_URL ||
-         (process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`) ||
-         'http://localhost:3000';
+         process.env.NEXT_PUBLIC_API_SERVER_URL || process.env.NEXT_PUBLIC_UNIMPLEMENTED_API_SERVER_URL || 'http://localhost:3000';
+       // TODO: 구현이 끝나면 경로를 변경해주세요
+       // const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
        // 목업 API 호출 (FollowersListClient와 동일한 엔드포인트 사용)
        const method = currentStatus ? 'DELETE' : 'POST'; // 현재 팔로우 중이면 DELETE(언팔로우), 아니면 POST(팔로우)

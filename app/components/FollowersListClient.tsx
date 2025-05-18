@@ -21,9 +21,7 @@ export default function FollowersListClient({ userId }: FollowersListClientProps
 
   useEffect(() => {
     const baseUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      (process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`) ||
-      'http://localhost:3000';
+      process.env.NEXT_PUBLIC_API_SERVER_URL || process.env.NEXT_PUBLIC_UNIMPLEMENTED_API_SERVER_URL || 'http://localhost:3000';
 
     fetch(`${baseUrl}/api/mock/followers/${userId}`)
       .then(r => r.json())
@@ -47,9 +45,9 @@ export default function FollowersListClient({ userId }: FollowersListClientProps
 
      try {
        const baseUrl =
-         process.env.NEXT_PUBLIC_API_BASE_URL ||
-         (process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`) ||
-         'http://localhost:3000';
+         process.env.NEXT_PUBLIC_API_SERVER_URL || process.env.NEXT_PUBLIC_UNIMPLEMENTED_API_SERVER_URL || 'http://localhost:3000';
+        // TODO: 구현이 끝나면 경로를 변경해주세요
+        // const baseUrl = process.env.NEXT_PUBLIC_API_SERVER_URL;
 
        const method = currentStatus ? 'DELETE' : 'POST';
        const response = await fetch(`${baseUrl}/api/mock/users/${targetUserId}/follow`, {

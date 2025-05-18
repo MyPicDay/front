@@ -22,7 +22,7 @@ export interface ProfileData {
 }
 
 const getBaseUrl = () => {
-  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+  return process.env.NEXT_PUBLIC_API_SERVER_URL || process.env.NEXT_PUBLIC_UNIMPLEMENTED_API_SERVER_URL || 'http://localhost:3000';
 };
 
 export async function getProfileData(id: string): Promise<ProfileData | { message: string }> {

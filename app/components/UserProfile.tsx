@@ -40,9 +40,9 @@ export default function UserProfile({ userId }: UserProfileProps) {
 
   useEffect(() => {
     const baseUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      (process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`) ||
-      'http://localhost:3000';
+      process.env.NEXT_PUBLIC_API_SERVER_URL || process.env.NEXT_PUBLIC_UNIMPLEMENTED_API_SERVER_URL || 'http://localhost:3000';
+    // TODO: 구현이 끝나면 경로를 변경해주세요
+    // const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
     fetch(`${baseUrl}/api/mock/profile/${userId}`)
       .then(r => r.json())

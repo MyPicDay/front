@@ -1,7 +1,10 @@
 import DiaryDetail from '../../../components/DiaryDetail';
 
 async function getDiary(id: string) {
-  const res = await fetch(`http://localhost:3000/api/mock/diaries/${id}`, { cache: 'no-store' });
+  const baseUrl = process.env.NEXT_PUBLIC_API_SERVER_URL || process.env.NEXT_PUBLIC_UNIMPLEMENTED_API_SERVER_URL || 'http://localhost:3000';
+  // TODO: 구현이 끝나면 경로를 변경해주세요
+  // const baseUrl = process.env.NEXT_PUBLIC_API_SERVER_URL;
+  const res = await fetch(`${baseUrl}/api/mock/diaries/${id}`, { cache: 'no-store' });
   if (!res.ok) {
     // This will activate the closest `error.js` Error Boundary
     throw new Error('Failed to fetch diary');

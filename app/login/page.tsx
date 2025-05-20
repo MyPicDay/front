@@ -4,6 +4,7 @@ import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import useAuthStore from '@/lib/store/authStore';
+import api from "@/app/api/api";
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -22,25 +23,53 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/mock/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      const response = await api.post('/auth/login', {
+        email,
+        password,
       });
 
-      const data = await response.json();
+      let token: string | null = null;
+      // ✅ 헤더에서 토큰 추출 (만약 서버가 헤더에 담는 구조라면)
+      const authHeader = response.headers['Authorization'];
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.slice(7);
+        if (token != null) {
+          localStorage.setItem('accessToken', token);
+        }
+        console.log('토큰 저장 완료:', token);
 
-      if (response.ok) {
-        setMessage('로그인 성공! 메인 페이지로 이동합니다.');
-        login(data.token, '');
-        console.log('Login successful, token stored. User:', data.user);
-        setTimeout(() => router.push('/'), 1000);
       } else {
-        setMessage(data.message || '로그인 중 오류가 발생했습니다.');
+        console.warn('응답 헤더에 토큰이 없습니다.');
       }
-    } catch (error) {
-      setMessage('네트워크 오류 또는 서버 문제로 로그인에 실패했습니다.');
-      console.error('Login fetch error:', error);
+
+      await fetch("http://localhost:8080/api/test/test2", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`, // JWT 토큰 포함
+        },
+        credentials: 'include'  // 쿠키와 인증 정보 포함 (필요한 경우)
+      })
+          .then(res => res.json())
+          .then(data => {
+            console.log("서버 응답:", data);
+          })
+          .catch(err => {
+            console.error("에러 발생:", err);
+          });
+
+
+      // ✅ 응답 바디 사용 (예: 사용자 정보)
+      const data = response.data;
+      setMessage('로그인 성공! 메인 페이지로 이동합니다.');
+      if (token != null) {
+        login(token, '');
+      }
+      console.log('Login successful, user:', data.user);
+      setTimeout(() => router.push('/'), 1000);
+    } catch (error: any) {
+      const message = error.response?.data?.message || '로그인 중 오류 발생';
+      setMessage(message);
+      console.error('❌ 로그인 실패:', message);
     }
     setIsLoading(false);
   };

@@ -22,7 +22,9 @@ export default function CalendarEventStyles({ diaries }: CalendarEventStylesProp
         position: relative;
         overflow: hidden;
       }
-      ${diaries.map(diary => `
+      ${diaries.map(diary => 
+        
+        `
         .fc-day[data-date="${diary.date}"] {
           background-image: url('${diary.image}');
           background-size: contain;

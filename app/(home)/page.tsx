@@ -1,12 +1,15 @@
 'use client';
 
-import { useEffect } from 'react';
+import Image from 'next/image'
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useAuthStore from '@/lib/store/authStore';
+
 
 export default function HomePage() {
   const router = useRouter();
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
 
   useEffect(() => {
     // authStore에서 isLoggedIn 상태가 true로 설정되면 (즉, 사용자가 로그인한 것으로 확인되면)
@@ -21,6 +24,18 @@ export default function HomePage() {
     // isLoggedIn이 false인 경우, layout.tsx가 /login으로 리디렉션할 것이므로
     // 이 컴포넌트에서는 별도의 처리를 하지 않습니다.
   }, [isLoggedIn, router]);
+
+    useEffect(() => {
+    // API 호출
+    fetch('/api/get-image')
+      .then(res => res.json())
+      .then(data => {
+        setImageUrl(data.imageUrl)
+      })
+  }, [])
+
+  if (!imageUrl) return <div>Loading...</div>
+
 
   // 리디렉션이 발생하거나, authStore의 상태가 확정될 때까지
   // 아무것도 표시하지 않거나 로딩 스피너를 보여줄 수 있습니다.

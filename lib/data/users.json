@@ -16,5 +16,11 @@
     "name": "1",
     "email": "1@gmail.com",
     "avatar": "/mockups/avatar2.png"
+  },
+  {
+    "id": "f44485af-6421-44c1-b37c-08c1bd288f21",
+    "name": "jieun",
+    "email": "jieun@naver.com",
+    "avatar": "/mockups/avatar1.png"
   }
 ]

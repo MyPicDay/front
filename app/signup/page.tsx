@@ -25,19 +25,21 @@ export default function SignupPage() {
     }
 
     try {
-      const response = await fetch('/api/mock/auth/signup', {
+      const response = await fetch('http://localhost:8080/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: nickname, email, password }),
+        body: JSON.stringify({ nickname, email, password }),
       });
 
-      const data = await response.json();
+      const result = await response.text();
+
+      console.log("서버 응답:", result);
 
       if (response.ok) {
         setMessage('회원가입 성공! 로그인 페이지로 이동합니다.');
         setTimeout(() => router.push('/login'), 2000);
       } else {
-        setMessage(data.message || '회원가입 중 오류가 발생했습니다.');
+        setMessage(result || '회원가입 중 오류가 발생했습니다.');
       }
     } catch (error) {
       setMessage('네트워크 오류 또는 서버 문제로 회원가입에 실패했습니다.');

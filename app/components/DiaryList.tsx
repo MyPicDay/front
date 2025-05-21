@@ -1,6 +1,6 @@
 'use client';
 
-import {useState} from 'react';
+import { useState , useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -38,7 +38,17 @@ const formatNumber = (num: number): string => {
   return num.toString();
 };
 
-const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
+const DiaryFeedItem = ({ diary }: { diary: Diary }) => { 
+
+  useEffect(() => {
+    async function fetchDiary() {
+      const res = await fetch(`http://localhost:8080/api/diary/1`);
+      const data = await res.json();
+      setLikeCount(data.count);
+    }
+   fetchDiary();
+  }, []);
+
   const [liked, setLiked] = useState(false);
   const likeCount = formatNumber(diary.likeCount ?? 0);
   const commentCount = formatNumber(diary.commentCount ?? 0);
@@ -47,7 +57,56 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
   const profileImage = diary.author?.profileImageUrl || "/images/roopy.jpg";
 
   const mainImage = diary.images?.find(img => img.isThumbnail) ||  diary.images?.[0];
+  
+  const [likeCount, setLikeCount] = useState(diary.likes || Math.floor(Math.random() * 500000) + 1000);
+  const [comment, setComment] = useState('');
+  const commentCount = diary.comments || Math.floor(Math.random() * 50000) + 100;
+  
+  // 랜덤 이름 (실제로는 API에서 가져온 데이터 사용)
+  const authorName = diary.author?.name || "홍길동";
+  const profileImage = diary.author?.image || "/images/cat-king.png";   
+  let timeout: NodeJS.Timeout;
 
+  function handleLikeToggle() { 
+    setLiked(prev => !prev);
+    console.log("전 liked", likeCount);
+  
+    // setLikeCount(prev => liked ? prev - 1 : prev + 1)
+    console.log("liked", likeCount);
+    clearTimeout(timeout); // 이전의 setTimeout을 취소 
+  
+  
+
+    timeout = setTimeout(async() => {  
+    
+    const result = await fetch('http://localhost:8080/api/diary/like', {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      body: JSON.stringify({ diaryId: diary.id, liked  }),
+    });
+    // 1초 후 API 호출로 DB에 좋아요 상태를 업데이트
+  }, 1000); // 1초 후에 API 호출
+  }
+
+  async function handleCommentSubmit() {
+    if (!comment.trim()) return;
+    const result = await fetch('http://localhost:8080/api/diary/comment', {
+      headers: {
+        'Content-Type': 'application/json',
+      }, 
+      method: 'POST',
+      body: JSON.stringify({ diaryId: diary.id, comment }),
+    });
+    // TODO: API 호출로 댓글 저장
+    setComment(''); // 입력창 초기화
+  }
+
+  function handleCommentChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setComment(e.target.value);
+  }
+  
   return (
     <article className="bg-white dark:bg-zinc-900 rounded-xl shadow-md mb-6 overflow-hidden">
       {/* 작성자 정보 */}
@@ -90,7 +149,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         <div className="flex mb-2 text-zinc-900 dark:text-white">
           <button 
             className="mr-4"
-            onClick={() => setLiked(!liked)}
+            onClick={handleLikeToggle}
             aria-label="좋아요"
           >
             {liked ? (
@@ -142,9 +201,11 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         <input
           type="text"
           placeholder="댓글 달기..."
+          value={comment}
+          onChange={handleCommentChange}
           className="flex-1 bg-transparent border-none outline-none text-zinc-700 dark:text-zinc-300"
         />
-        <button className="text-blue-500 font-semibold">게시</button>
+        <button onClick={handleCommentSubmit} className="text-blue-500 font-semibold">게시</button>
       </div>
     </article>
   );

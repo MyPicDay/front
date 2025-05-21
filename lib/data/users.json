@@ -21,6 +21,21 @@
     "id": "f44485af-6421-44c1-b37c-08c1bd288f21",
     "name": "jieun",
     "email": "jieun@naver.com",
+    "id": "a70612f2-0f44-4892-9bf1-fa2c7d7aac26",
+    "name": "nick",
+    "email": "eilsamo600@gmail.com",
+    "avatar": "/mockups/avatar2.png"
+  },
+  {
+    "id": "6daa2293-ac3a-4c55-b764-9a37032935de",
+    "name": "123",
+    "email": "eee@gmail.com",
+    "avatar": "/mockups/avatar1.png"
+  },
+  {
+    "id": "7a141c75-fba4-4886-b266-f1b09ce54af7",
+    "name": "nn",
+    "email": "123@gmail.com",
     "avatar": "/mockups/avatar1.png"
   }
 ]

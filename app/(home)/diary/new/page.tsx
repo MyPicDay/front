@@ -75,79 +75,85 @@ interface DiaryFormProps {
 
 const DiaryForm = ({ 
   title, setTitle, content, setContent, visibility, setVisibility, isLoading, onSubmit
-}: DiaryFormProps) => (
-  <form onSubmit={onSubmit}>
-    <div className="mb-4">
-      <input
-        type="text"
-        placeholder="제목 입력"
-        className="w-full p-2 border border-amber-200 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-300 bg-white"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        required
-      />
-    </div>
-    
-    <div className="mb-4">
-      <textarea
-        placeholder="글을 작성해주세요..."
-        className="w-full h-60 p-2 border border-amber-200 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-amber-300 bg-white"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        required
-      />
-    </div>
-    
-    <div className="mb-6">
-      <p className="mb-2">일기 공개 여부</p>
-      <div className="flex space-x-4">
-        <label className="flex items-center">
-          <input
-            type="radio"
-            name="visibility"
-            value="public"
-            checked={visibility === 'public'}
-            onChange={() => setVisibility('public')}
-            className="mr-2"
-          />
-          <span>전체공개</span>
-        </label>
-        <label className="flex items-center">
-          <input
-            type="radio"
-            name="visibility"
-            value="friends"
-            checked={visibility === 'friends'}
-            onChange={() => setVisibility('friends')}
-            className="mr-2"
-          />
-          <span>친구공개</span>
-        </label>
-        <label className="flex items-center">
-          <input
-            type="radio"
-            name="visibility"
-            value="private"
-            checked={visibility === 'private'}
-            onChange={() => setVisibility('private')}
-            className="mr-2"
-          />
-          <span>비공개</span>
-        </label>
+}: DiaryFormProps) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+
+  }
+
+  return (
+    <form onSubmit={onSubmit}>
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="제목 입력"
+          className="w-full p-2 border border-amber-200 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-300 bg-white"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
       </div>
-    </div>
-    
-    <div className="text-center">
-      <button
-        type="submit"
-        className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded-md transition-colors"
-        disabled={isLoading}
-      >
-        {isLoading ? '작성하기...' : '작성하기'}
-      </button>
-    </div>
-  </form>
-);
+      
+      <div className="mb-4">
+        <textarea
+          placeholder="글을 작성해주세요..."
+          className="w-full h-60 p-2 border border-amber-200 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-amber-300 bg-white"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          required
+        />
+      </div>
+      
+      <div className="mb-6">
+        <p className="mb-2">일기 공개 여부</p>
+        <div className="flex space-x-4">
+          <label className="flex items-center">
+            <input
+              type="radio"
+              name="visibility"
+              value="public"
+              checked={visibility === 'public'}
+              onChange={() => setVisibility('public')}
+              className="mr-2"
+            />
+            <span>전체공개</span>
+          </label>
+          <label className="flex items-center">
+            <input
+              type="radio"
+              name="visibility"
+              value="friends"
+              checked={visibility === 'friends'}
+              onChange={() => setVisibility('friends')}
+              className="mr-2"
+            />
+            <span>친구공개</span>
+          </label>
+          <label className="flex items-center">
+            <input
+              type="radio"
+              name="visibility"
+              value="private"
+              checked={visibility === 'private'}
+              onChange={() => setVisibility('private')}
+              className="mr-2"
+            />
+            <span>비공개</span>
+          </label>
+        </div>
+      </div>
+      
+      <div className="text-center">
+        <button
+          type="submit"
+          className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded-md transition-colors"
+          disabled={isLoading}
+        >
+          {isLoading ? '작성하기...' : '작성하기'}
+        </button>
+      </div>
+    </form>
+  );
+};
 
 // 이미지 생성 및 선택 컴포넌트 (Step 2)
 interface ImageGeneratorProps {
@@ -321,7 +327,8 @@ export default function DiaryNewPage() {
   const [pageTitle, setPageTitle] = useState('오늘의 일기');
 
   useEffect(() => {
-    const { determinedDate, newPageTitle } = determineDateAndTitle(searchParams);
+    const { determinedDate, newPageTitle } = determineDateAndTitle(searchParams); 
+   
     setCurrentDate(determinedDate);
     setPageTitle(newPageTitle);
   }, [searchParams]);
@@ -330,6 +337,7 @@ export default function DiaryNewPage() {
   const allImages = [...images, ...uploadPreviews];
 
   const handleSubmitForm = async (e: React.FormEvent) => {
+    console.log(title);
     e.preventDefault();
     setIsLoading(true);
     setStep(2);
@@ -417,10 +425,20 @@ export default function DiaryNewPage() {
     setSelectedImageIndex(index);
   };
 
-  const handleSaveDiary = () => {
+  const handleSaveDiary = async () => { 
+
+    
+    const result = await fetch('http://localhost:8080/api/diary', {
+      headers : {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      body: JSON.stringify({ title, content, visibility  , allImages} ),
+    }); 
+
     // 실제 구현에서는 여기서 최종 저장 API를 호출합니다
     alert('일기가 저장되었습니다!');
-    // router.push('/diary/{id}');
+    //router.push(`/diary/${result.id}`);
   };
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {

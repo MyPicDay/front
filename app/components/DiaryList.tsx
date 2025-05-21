@@ -4,19 +4,24 @@ import { useState , useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+type ImageInfo = {
+  url: string;
+  isThumbnail: boolean;
+};
+
 type Diary = {
-  id: number;
+  diaryId: number;
   title: string;
   content: string;
-  date: string;
+  createdAt: string;
   authorId: string;
-  image: string;
+  images: ImageInfo[];
   author?: {
-    name: string;
-    image: string;
+    username: string;
+    profileImageUrl: string;
   };
-  likes?: number;
-  comments?: number;
+  likeCount?: number;
+  commentCount?: number;
 };
 
 // 요약된 숫자 표시 함수 (예: 1.2만, 293.4만)
@@ -45,6 +50,14 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
   }, []);
 
   const [liked, setLiked] = useState(false);
+  const likeCount = formatNumber(diary.likeCount ?? 0);
+  const commentCount = formatNumber(diary.commentCount ?? 0);
+  const authorName = diary.author?.username;
+  // TODO (추후 수정 예정) 현재는 프로필 이미지가 없는 관계로 디폴트 값 존재
+  const profileImage = diary.author?.profileImageUrl || "/images/roopy.jpg";
+
+  const mainImage = diary.images?.find(img => img.isThumbnail) ||  diary.images?.[0];
+  
   const [likeCount, setLikeCount] = useState(diary.likes || Math.floor(Math.random() * 500000) + 1000);
   const [comment, setComment] = useState('');
   const commentCount = diary.comments || Math.floor(Math.random() * 50000) + 100;
@@ -101,7 +114,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         <div className="w-10 h-10 rounded-full overflow-hidden mr-3 ">
           <Image 
             src={profileImage} 
-            alt={authorName} 
+            alt={authorName ?? ""}
             width={40} 
             height={40} 
             className="object-cover"
@@ -118,16 +131,17 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
       </div>
       
       {/* 이미지 */}
+      {/*TODO (추후 삭제 예정)현재 이미지가 없으면 기본 이미지 설정*/}
       <div className="relative w-full">
-        <Image
-          src={diary.image}
-          alt={diary.title}
-          width={500}
-          height={500}
-          className="w-full h-auto object-cover"
-          loading="lazy"
-          priority={false}
-        />
+          <Image
+              src={mainImage?.url || "/images/roopy.jpg"}
+              alt={diary?.title}
+              width={500}
+              height={500}
+              className="w-full h-auto object-cover"
+              loading="lazy"
+              priority={false}
+          />
       </div>
       
       {/* 상호작용 버튼 */}
@@ -149,7 +163,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
             )}
           </button>
           
-          <Link href={`/diary/${diary.id}`} aria-label="댓글">
+          <Link href={`/diary/${diary.diaryId}`} aria-label="댓글">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
@@ -158,12 +172,12 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         
         {/* 좋아요 수 */}
         <div className="font-semibold text-zinc-900 dark:text-white mb-1">
-          좋아요 {formatNumber(liked ? likeCount + 1 : likeCount)}개
+          좋아요 {likeCount}개
         </div>
         
         {/* 제목과 내용 */}
         <div className="mb-1">
-          <Link href={`/diary/${diary.id}`} className="font-semibold text-zinc-900 dark:text-white mr-2 inline-block">
+          <Link href={`/diary/${diary.diaryId}`} className="font-semibold text-zinc-900 dark:text-white mr-2 inline-block">
             {authorName}
           </Link>
           <span className="text-zinc-700 dark:text-zinc-300 truncate">{diary.title}</span>
@@ -171,14 +185,14 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         
         {/* 댓글 보기 */}
         <div className="text-zinc-500 dark:text-zinc-400 text-sm">
-          <Link href={`/diary/${diary.id}`}>
-            댓글 {formatNumber(commentCount)}개 모두 보기
+          <Link href={`/diary/${diary.diaryId}`}>
+            댓글 {commentCount}개 모두 보기
           </Link>
         </div>
         
         {/* 작성 날짜 */}
         <time className="text-xs text-zinc-500 dark:text-zinc-400 block mt-1">
-          {new Date(diary.date).toLocaleDateString('ko-KR')}
+          {new Date(diary.createdAt).toLocaleDateString('ko-KR')}
         </time>
       </div>
       
@@ -207,7 +221,7 @@ const RecommendedDiary = ({ diary }: { diary: Diary }) => {
   );
 };
 
-export default function DiaryList({ items }: { items: Diary[] }) {
+export default function DiaryList({ items }: { items: Diary[]  }) {
   // 첫 번째 다이어리를 추천으로 표시하고 나머지는 일반 피드로 표시
   if (!items || items.length === 0) {
     return (
@@ -223,7 +237,7 @@ export default function DiaryList({ items }: { items: Diary[] }) {
     <section className="container mx-auto px-4 py-8 max-w-lg">
 
       {regularDiaries.map((diary) => (
-        <DiaryFeedItem key={diary.id} diary={diary} />
+        <DiaryFeedItem key={diary.diaryId} diary={diary} />
       ))}
     </section>
   );

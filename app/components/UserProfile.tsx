@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import {useEffect, useState} from 'react';
 import ProfileCalendar from './calendar';
 import FollowersListClient from './FollowersListClient';
 import FollowingsListClient from './FollowingsListClient';
@@ -17,15 +16,6 @@ interface Stats {
   diaryCount: number;
   followerCount: number;
   followingCount: number;
-}
-
-interface Diary {
-  id: number;
-  title: string;
-  content: string;
-  date: string;
-  authorId: string;
-  image: string;
 }
 
 interface UserProfileProps {
@@ -110,4 +100,4 @@ export default function UserProfile({ userId }: UserProfileProps) {
       </div>
     </div>
   );
-} 
+}

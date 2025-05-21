@@ -30,7 +30,7 @@ export default function LoginPage() {
 
       let token: string | null = null;
       // ✅ 헤더에서 토큰 추출 (만약 서버가 헤더에 담는 구조라면)
-      const authHeader = response.headers['Authorization'];
+      const authHeader = response.headers['authorization'];
       if (authHeader && authHeader.startsWith('Bearer ')) {
         token = authHeader.slice(7);
         if (token != null) {
@@ -42,29 +42,10 @@ export default function LoginPage() {
         console.warn('응답 헤더에 토큰이 없습니다.');
       }
 
-      await fetch("http://localhost:8080/api/test/test2", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`, // JWT 토큰 포함
-        },
-        credentials: 'include'  // 쿠키와 인증 정보 포함 (필요한 경우)
-      })
-          .then(res => res.json())
-          .then(data => {
-            console.log("서버 응답:", data);
-          })
-          .catch(err => {
-            console.error("에러 발생:", err);
-          });
-
-
-      // ✅ 응답 바디 사용 (예: 사용자 정보)
-      const data = response.data;
       setMessage('로그인 성공! 메인 페이지로 이동합니다.');
       if (token != null) {
         login(token, '');
       }
-      console.log('Login successful, user:', data.user);
       setTimeout(() => router.push('/'), 1000);
     } catch (error: any) {
       const message = error.response?.data?.message || '로그인 중 오류 발생';

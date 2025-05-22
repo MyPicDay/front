@@ -1,8 +1,10 @@
 'use client';
 
-import { useState , useEffect } from 'react';
+import {useEffect, useState} from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import api from "@/app/api/api";
+import type {Page} from "@/app/types";
 
 type ImageInfo = {
   url: string;
@@ -38,33 +40,28 @@ const formatNumber = (num: number): string => {
   return num.toString();
 };
 
-const DiaryFeedItem = ({ diary }: { diary: Diary }) => { 
-
+const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
+  debugger;
   useEffect(() => {
     async function fetchDiary() {
-      const res = await fetch(`http://localhost:8080/api/diary/1`);
+      const res = await api.get(`diary${diary.diaryId}`);
       const data = await res.json();
       setLikeCount(data.count);
     }
-   fetchDiary();
+    fetchDiary();
   }, []);
 
   const [liked, setLiked] = useState(false);
-  const likeCount = formatNumber(diary.likeCount ?? 0);
   const commentCount = formatNumber(diary.commentCount ?? 0);
   const authorName = diary.author?.username;
-  // TODO (추후 수정 예정) 현재는 프로필 이미지가 없는 관계로 디폴트 값 존재
   const profileImage = diary.author?.profileImageUrl || "/images/roopy.jpg";
 
   const mainImage = diary.images?.find(img => img.isThumbnail) ||  diary.images?.[0];
   
-  const [likeCount, setLikeCount] = useState(diary.likes || Math.floor(Math.random() * 500000) + 1000);
+  const [likeCount, setLikeCount] = useState(diary.likeCount ?? 0);
   const [comment, setComment] = useState('');
-  const commentCount = diary.comments || Math.floor(Math.random() * 50000) + 100;
-  
+
   // 랜덤 이름 (실제로는 API에서 가져온 데이터 사용)
-  const authorName = diary.author?.name || "홍길동";
-  const profileImage = diary.author?.image || "/images/cat-king.png";   
   let timeout: NodeJS.Timeout;
 
   function handleLikeToggle() { 
@@ -78,27 +75,35 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
   
 
     timeout = setTimeout(async() => {  
-    
-    const result = await fetch('http://localhost:8080/api/diary/like', {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-      body: JSON.stringify({ diaryId: diary.id, liked  }),
-    });
+    //
+    // const result = await fetch('/diary/like', {
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   method: 'POST',
+    //   body: JSON.stringify({ diaryId: diary.diaryId, liked  }),
+    // });
+
+      const result = await api.post('/diary/like', {
+          "diaryId": diary.diaryId,
+          "liked": liked
+      });
+
+      const data = result.data.json();
+
     // 1초 후 API 호출로 DB에 좋아요 상태를 업데이트
   }, 1000); // 1초 후에 API 호출
   }
 
   async function handleCommentSubmit() {
-    if (!comment.trim()) return;
-    const result = await fetch('http://localhost:8080/api/diary/comment', {
-      headers: {
-        'Content-Type': 'application/json',
-      }, 
-      method: 'POST',
-      body: JSON.stringify({ diaryId: diary.id, comment }),
-    });
+    if (!commentCount.trim()) return;
+    // const result = await api('/api/diary/comment', {
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   method: 'POST',
+    //   body: JSON.stringify({ diaryId: diary.diaryId, commentCount }),
+    // });
     // TODO: API 호출로 댓글 저장
     setComment(''); // 입력창 초기화
   }
@@ -221,22 +226,37 @@ const RecommendedDiary = ({ diary }: { diary: Diary }) => {
   );
 };
 
-export default function DiaryList({ items }: { items: Diary[]  }) {
+export default function DiaryList(page = 0) {
+  console.log()
+  const [diaries, setDiaries] = useState<Diary[]>([]);
+  useEffect(() => {
+    const loadDiaries  = async () => {
+      try {
+        const res = await api.get<Page<Diary>>('/diaries', {
+          params: {
+            page: page,
+            sort: 'createdAt,desc'
+          }
+        });
+        setDiaries(res.data.content);
+      } catch (e) {
+        console.error(e);
+        setDiaries([]);
+      }
+    };
+    loadDiaries();
+  }, []);
   // 첫 번째 다이어리를 추천으로 표시하고 나머지는 일반 피드로 표시
-  if (!items || items.length === 0) {
+  if (!diaries || diaries.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
         <p className="text-zinc-600 dark:text-zinc-400">등록된 일기가 없습니다.</p>
       </div>
     );
   }
-
-  const regularDiaries = items
-
   return (
     <section className="container mx-auto px-4 py-8 max-w-lg">
-
-      {regularDiaries.map((diary) => (
+      {diaries.map((diary) => (
         <DiaryFeedItem key={diary.diaryId} diary={diary} />
       ))}
     </section>

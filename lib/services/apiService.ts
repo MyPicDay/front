@@ -62,18 +62,3 @@ export async function fetchMonthlyDiaries(userId: string, year: number, month: n
   }
 }
 
-/* 공통 API 호출 함수 작성 */
-export async function apiFetch<T>(url: string, options = {}) : Promise<T> {
-  try {
-    const res = await fetch(url, options);
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(data.message || res.statusText);
-    }
-    return data as T;
-  } catch (error) {
-    console.error('API 요청 중 오류 발생 : ', error);
-    throw error;
-  }
-}
-

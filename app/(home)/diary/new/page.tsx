@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useRef, ChangeEvent, useEffect } from 'react';
+import {ChangeEvent, useEffect, useRef, useState} from 'react';
 import Image from 'next/image';
-import { useSearchParams, ReadonlyURLSearchParams } from 'next/navigation';
+import {ReadonlyURLSearchParams, useSearchParams} from 'next/navigation';
 
 // 이미지 썸네일 컴포넌트
 interface ImageThumbnailProps {
@@ -426,8 +426,6 @@ export default function DiaryNewPage() {
   };
 
   const handleSaveDiary = async () => { 
-
-    
     const result = await fetch('http://localhost:8080/api/diary', {
       headers : {
         'Content-Type': 'application/json',

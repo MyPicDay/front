@@ -3,7 +3,7 @@
 import { useState , useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-
+import api from '@/app/api/api';
 type Diary = {
   id: number;
   title: string;
@@ -35,11 +35,14 @@ const formatNumber = (num: number): string => {
 
 const DiaryFeedItem = ({ diary }: { diary: Diary }) => { 
 
-  useEffect(() => {
+    useEffect(() => {
     async function fetchDiary() {
-      const res = await fetch(`http://localhost:8080/api/diary/1`);
-      const data = await res.json();
+      console.log("diary", diary.id);
+      const res = await api.get(`/diary/${diary.id}`);
+      const data = res.data;
+     // console.log("data", data);
       setLikeCount(data.count);
+      setLiked(data.liked);
     }
    fetchDiary();
   }, []);
@@ -64,22 +67,32 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
   
   
 
-    timeout = setTimeout(async() => {  
+    timeout = setTimeout(async () => {
+      try {
+        const result = await api.post(
+          '/diary/like',
+          {
+            diaryId: 1,
+            liked: liked,
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
     
-    const result = await fetch('http://localhost:8080/api/diary/like', {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-      body: JSON.stringify({ diaryId: diary.id, liked  }),
-    });
-    // 1초 후 API 호출로 DB에 좋아요 상태를 업데이트
-  }, 1000); // 1초 후에 API 호출
+        // 결과 처리 (예: 콘솔 출력 등)
+        console.log('좋아요 업데이트 성공', result.data);
+      } catch (error) {
+        console.error('좋아요 업데이트 실패', error);
+      }
+    }, 1000);
   }
 
   async function handleCommentSubmit() {
     if (!comment.trim()) return;
-    const result = await fetch('http://localhost:8080/api/diary/comment', {
+    const result = await api.post('/diary/comment', {
       headers: {
         'Content-Type': 'application/json',
       }, 

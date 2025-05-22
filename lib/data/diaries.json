@@ -1,0 +1,130 @@
+[
+  {
+    "id": 1,
+    "title": "봄 소풍",
+    "content": "오늘은 벚꽃이 만개한 공원에서 소풍을 즐겼다.",
+    "date": "2025-05-10",
+    "authorId": "mock-uuid-user-1",
+    "image": "/images/cat-king.png"
+  },
+  {
+    "id": 2,
+    "title": "비 오는 날",
+    "content": "창밖을 보며 따뜻한 커피 한 잔을 마셨다.",
+    "date": "2025-05-11",
+    "authorId": "mock-uuid-user-2",
+    "image": "/images/cat-king.png"
+  },
+  {
+    "id": 3,
+    "title": "친구와의 만남",
+    "content": "오랜만에 친구를 만나 즐거운 시간을 보냈다.",
+    "date": "2025-05-12",
+    "authorId": "mock-uuid-user-1",
+    "image": "/images/cat-king.png"
+  },
+  {
+    "id": 4,
+    "title": "오늘의 놀이공원",
+    "content": "놀이공원에서 롤러코스터를 타며 스트레스를 날렸다.",
+    "date": "2025-05-01",
+    "authorId": "mock-uuid-user-1",
+    "image": "/images/cat-king.png"
+  },
+  {
+    "id": 5,
+    "title": "문화의 날",
+    "content": "박물관에서 새로운 전시회를 관람했다.",
+    "date": "2025-05-05",
+    "authorId": "mock-uuid-user-1",
+    "image": "/images/cat-king.png"
+  },
+  {
+    "id": 6,
+    "title": "일기: 스트레스",
+    "content": "일이 많아 피곤한 하루였다.",
+    "date": "2025-05-13",
+    "authorId": "mock-uuid-user-1",
+    "image": "/images/cat-king.png"
+  },
+  {
+    "id": 7,
+    "title": "여행 준비",
+    "content": "다음 주 해외여행을 위한 짐을 챙겼다.",
+    "date": "2025-05-15",
+    "authorId": "mock-uuid-user-1",
+    "image": "/images/cat-king.png"
+  },
+  {
+    "id": 8,
+    "title": "아이스크림",
+    "content": "더운 날씨에 아이스크림을 맛있게 먹었다.",
+    "date": "2025-05-30",
+    "authorId": "mock-uuid-user-1",
+    "image": "/images/cat-king.png"
+  },
+  {
+    "id": 9,
+    "title": "새 책",
+    "content": "새로 산 책을 읽기 시작했다. 정말 흥미롭다.",
+    "date": "2025-05-08",
+    "authorId": "mock-uuid-user-2",
+    "image": "/images/cat-king.png"
+  },
+  {
+    "id": 10,
+    "title": "축제",
+    "content": "지역 축제에 참여해서 즐거운 시간을 보냈다.",
+    "date": "2025-05-01",
+    "authorId": "f6a8c126-b606-4677-979a-f45be30ab10d",
+    "image": "/images/cat-king.png"
+  },
+  {
+    "id": 11,
+    "title": "2025년 3월 15일 일기",
+    "content": "오늘은 날씨가 좋아서 공원에 다녀왔다. 즐거운 하루였다.",
+    "date": "2025-03-15",
+    "authorId": "user1",
+    "image": "/images/cat-king.png"
+  },
+  {
+    "id": 12,
+    "title": "2025년 4월 1일 일기",
+    "content": "만우절! 친구에게 재미있는 장난을 쳤다.",
+    "date": "2025-05-21",
+    "authorId": "user1",
+    "image": "/images/cat-king.png"
+  },
+  {
+    "id": 13,
+    "title": "2025년 4월 20일 일기",
+    "content": "새로운 프로젝트를 시작했다. 기대된다.",
+    "date": "2025-05-20",
+    "authorId": "user1",
+    "image": "/images/cat-king.png"
+  },
+  {
+    "id": 14,
+    "title": "2025년 5월 5일 일기",
+    "content": "어린이날, 조카와 함께 시간을 보냈다.",
+    "date": "2025-05-05",
+    "authorId": "user1",
+    "image": "/images/cat-king.png"
+  },
+  {
+    "id": 15,
+    "title": "2025년 5월 10일 일기",
+    "content": "오랜만에 친구들을 만나 즐거운 시간을 보냈다.",
+    "date": "2025-05-10",
+    "authorId": "user2",
+    "image": "/images/cat-king.png"
+  },
+  {
+    "id": 16,
+    "title": "2025년 6월 1일 일기",
+    "content": "여름이 시작되는 것 같다. 더워지기 시작했다.",
+    "date": "2025-06-01",
+    "authorId": "user1",
+    "image": "/images/cat-king.png"
+  }
+] 

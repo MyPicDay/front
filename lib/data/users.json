@@ -1,0 +1,20 @@
+[
+  {
+    "id": "mock-uuid-user-1",
+    "name": "홍길동",
+    "email": "hong@example.com",
+    "avatar": "/images/city-night.png"
+  },
+  {
+    "id": "mock-uuid-user-2",
+    "name": "김철수",
+    "email": "kim@example.com",
+    "avatar": "/mockups/avatar2.png"
+  },
+  {
+    "id": "f6a8c126-b606-4677-979a-f45be30ab10d",
+    "name": "1",
+    "email": "1@gmail.com",
+    "avatar": "/mockups/avatar2.png"
+  }
+]

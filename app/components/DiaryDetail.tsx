@@ -65,6 +65,7 @@ const formatNumber = (num: number) => {
 
 
 export default function DiaryDetail({ diary }: { diary: Diary }) {
+
   // 목업 데이터 및 상태 (실제로는 diary prop에서 받거나, SWR/React Query 등으로 관리)
   const [liked, setLiked] = useState(false);
   const [newComment, setNewComment] = useState('');

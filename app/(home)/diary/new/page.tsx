@@ -2,7 +2,8 @@
 
 import {ChangeEvent, useEffect, useRef, useState} from 'react';
 import Image from 'next/image';
-import {ReadonlyURLSearchParams, useSearchParams} from 'next/navigation';
+import { useSearchParams, ReadonlyURLSearchParams } from 'next/navigation';
+import api from '@/app/api/api';
 
 // 이미지 썸네일 컴포넌트
 interface ImageThumbnailProps {
@@ -77,7 +78,7 @@ const DiaryForm = ({
   title, setTitle, content, setContent, visibility, setVisibility, isLoading, onSubmit
 }: DiaryFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
-
+    
   }
 
   return (
@@ -426,13 +427,21 @@ export default function DiaryNewPage() {
   };
 
   const handleSaveDiary = async () => { 
-    const result = await fetch('http://localhost:8080/api/diary', {
-      headers : {
-        'Content-Type': 'application/json',
+     console.log(uploadedFiles); 
+
+     const formData = new FormData();
+     formData.append('title', title);
+     formData.append('content', content);
+     formData.append('visibility', visibility);
+     uploadedFiles.forEach((file) => {
+       formData.append('images', file);
+     });
+    
+    const result = await api.post('/diary', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
       },
-      method: 'POST',
-      body: JSON.stringify({ title, content, visibility  , allImages} ),
-    }); 
+    });
 
     // 실제 구현에서는 여기서 최종 저장 API를 호출합니다
     alert('일기가 저장되었습니다!');
@@ -440,6 +449,7 @@ export default function DiaryNewPage() {
   };
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
+   
     if (e.target.files && e.target.files.length > 0) {
       const selectedFiles = Array.from(e.target.files);
       const filesToAdd = selectedFiles.slice(0, 3 - (images.length + uploadedFiles.length));

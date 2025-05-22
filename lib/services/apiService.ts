@@ -1,4 +1,4 @@
-import { Diary } from '@/app/types/diary';
+import {Diary} from '@/app/types/diary';
 
 // UserProfile 컴포넌트의 User 타입과 일치해야 함 (page.tsx에서 가져옴)
 interface User {
@@ -21,7 +21,8 @@ export interface ProfileData {
   message?: string;
 }
 
-const getBaseUrl = () => {
+
+export const getBaseUrl = () => {
   return process.env.NEXT_PUBLIC_API_SERVER_URL || process.env.NEXT_PUBLIC_UNIMPLEMENTED_API_SERVER_URL || 'http://localhost:3000';
 };
 
@@ -59,4 +60,5 @@ export async function fetchMonthlyDiaries(userId: string, year: number, month: n
     console.error('fetchMonthlyDiaries API 호출 중 예외 발생:', error);
     return []; // 오류 발생 시 빈 배열 반환
   }
-} 
+}
+

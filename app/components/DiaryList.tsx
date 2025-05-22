@@ -41,11 +41,10 @@ const formatNumber = (num: number): string => {
 };
 
 const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
-  debugger;
   useEffect(() => {
     async function fetchDiary() {
       const res = await api.get(`diary${diary.diaryId}`);
-      const data = await res.json();
+      const data = await res.data.json();
       setLikeCount(data.count);
     }
     fetchDiary();

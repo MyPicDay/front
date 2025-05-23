@@ -2,7 +2,7 @@
 
 import {ChangeEvent, useEffect, useRef, useState} from 'react';
 import Image from 'next/image';
-import { useSearchParams, ReadonlyURLSearchParams } from 'next/navigation';
+import { useSearchParams, ReadonlyURLSearchParams, useRouter } from 'next/navigation';
 import api from '@/app/api/api';
 
 // 이미지 썸네일 컴포넌트
@@ -312,6 +312,7 @@ const determineDateAndTitle = (searchParams: ReadonlyURLSearchParams): { determi
 
 // 메인 페이지 컴포넌트
 export default function DiaryNewPage() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -445,7 +446,10 @@ export default function DiaryNewPage() {
 
     // 실제 구현에서는 여기서 최종 저장 API를 호출합니다
     alert('일기가 저장되었습니다!');
-    //router.push(`/diary/${result.id}`);
+    console.log("result: ", result);
+    if (result && result.data) {
+      router.push(`/diary/${result.data}`);
+    }
   };
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {

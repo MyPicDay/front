@@ -3,7 +3,7 @@
 import {useEffect, useState} from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-|import api from "@/app/api/api";
+import api from "@/app/api/api";
 import type {Page} from "@/app/types";
 
 type ImageInfo = {

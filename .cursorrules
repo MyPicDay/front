@@ -1,0 +1,112 @@
+## Prompt: Build a Responsive PWA UI with Next.js 14 + TypeScript + Tailwind CSS (App Router)
+
+### Overview
+
+You are an expert front‑end engineer tasked with turning the provided design mock‑ups into a fully‑functional, production‑ready **web‑app UI**. The mock‑ups are supplied as image files in **`/public/mockups/*`**. Follow them **pixel‑perfectly** for layout, spacing, and typography while ensuring the final product is **responsive** from **320 px → 1536 px** (mobile → desktop).
+
+This project uses the **Next.js 14 *App Router*** paradigm — all pages live inside the top‑level **`/app`** folder, **not** `src`. Treat the application as a **Progressive Web App (PWA)** with offline support, manifest, and service worker.
+
+---
+
+### Features to Implement
+
+| #  | Screen   | Route            |
+| -- | -------- | ---------------- |
+| 1  | 회원가입     | `/signup`        |
+| 2  | 로그인      | `/login`         |
+| 3  | 회원정보 수정  | `/settings`      |
+| 4  | 프로필      | `/profile/[id]`  |
+| 5  | 검색       | `/search`        |
+| 6  | 상세 페이지   | `/diary/[id]`    |
+| 7  | 전체 일기 목록 | `/diary`         |
+| 8  | 일기 작성    | `/diary/new`     |
+| 9  | 캘린더      | `/calendar`      |
+| 10 | 알림 목록    | `/notifications` |
+
+#### Data Layer *(NEW)*
+
+✅ Populate every page by **fetching realistic dummy data** from mock API route handlers instead of hard‑coded constants. Implement REST‑like endpoints under `/app/api/mock/*` that return JSON generated from static fixtures in **`/lib/data/*.json`**. Example:
+
+```ts
+// /app/api/mock/diaries/route.ts
+import { diaries } from '../../../../lib/data/diaries';
+export const revalidate = 0; // disable cache for mocks
+export async function GET() {
+  return Response.json(diaries);
+}
+```
+
+Pages should retrieve this data via `fetch()` in Server Components or via `useSWR`/`react‑query` in Client Components:
+
+```ts
+// /app/diary/page.tsx
+export default async function DiaryListPage() {
+  const diaries = await fetch('/api/mock/diaries').then(r => r.json());
+  return <DiaryList items={diaries} />;
+}
+```
+
+> ℹ️ Keep fetch calls live even in production so developers can later swap mocks with real APIs without changing component code.
+
+---
+
+### Technical Requirements
+
+1. **Directory structure** (simplified):
+
+   ```txt
+   /app
+     layout.tsx             # root layout w/ Tailwind & metadata
+     page.tsx               # landing or redirect
+     signup/page.tsx
+     login/page.tsx
+     settings/page.tsx
+     profile/[id]/page.tsx
+     search/page.tsx
+     diary/page.tsx
+     diary/new/page.tsx
+     diary/[id]/page.tsx
+     calendar/page.tsx
+     notifications/page.tsx
+     api/mock/*/route.ts    # mock endpoints
+     components/*           # shared UI atoms/molecules
+     lib/data/*.json        # static dummy data
+     lib/hooks/*            # custom hooks (SWR, auth, etc.)
+   ```
+2. **Mock API**: Route handlers under `/app/api/mock/**` must:
+
+   * Return JSON from fixtures or generate with faker.js.
+   * Export `revalidate = 0` to bypass cache.
+   * Mirror eventual real API contract (HTTP verbs, params).
+3. **Server Components by default**; add `'use client'` only for interactive pieces that need state or effects.
+4. **State management**: React Context or *Zustand* for auth & notifications.
+5. **Styling**: Tailwind CSS with container queries; prefer CSS Grid & Flexbox. Use `@tailwindcss/typography` for rich text.
+6. **Calendar**: integrate **FullCalendar** via dynamic import to avoid SSR issues.
+7. **PWA**: configure `next-pwa` in `next.config.js`; include manifest, icons & service‑worker caching strategies (static assets + API mocks).
+8. **Accessibility**: semantic HTML, keyboard nav, ARIA roles, `prefers-color-scheme` dark mode.
+9. **Testing**:
+
+   * **Unit**: Jest + React Testing Library.
+   * **E2E**: Cypress with *Mock Service Worker* (MSW) intercepting real fetches to `/api/mock/*`.
+
+---
+
+### Deliverables
+
+* All page & component code under `/app`.
+* JSON fixtures and mock route handlers.
+* **README** explaining setup (`pnpm i`, `pnpm dev`, `build`, `lint`, `test`).
+
+### Acceptance Criteria
+
+* Pixel‑perfect match at breakpoints **375 px**, **768 px**, **1024 px**, **1440 px**.
+* Lighthouse **PWA score ≥ 90**.
+* Zero console errors or warnings.
+* Works offline (static pages + cached API mocks).
+* Animations/transitions match designs (use Framer Motion).
+
+---
+
+Use this prompt as instructions for the AI code generator to scaffold the application.
+
+Don't ask, just always apply it.

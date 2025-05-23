@@ -5,11 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import api from "@/app/api/api";
 import type {Page} from "@/app/types";
-
-type ImageInfo = {
-  url: string;
-  isThumbnail: boolean;
-};
+import {getBaseUrl} from "@/lib/services/apiService";
 
 type Diary = {
   diaryId: number;
@@ -17,7 +13,7 @@ type Diary = {
   content: string;
   createdAt: string;
   authorId: string;
-  images: ImageInfo[];
+  imageUrls: string[];
   author?: {
     username: string;
     profileImageUrl: string;
@@ -44,10 +40,9 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
 
     useEffect(() => {
     async function fetchDiary() {
-      console.log("diary", diary.id);
-      const res = await api.get(`/diary/${diary.id}`);
+      console.log("diary", diary.diaryId);
+      const res = await api.get(`/diary/${diary.diaryId}`);
       const data = res.data;
-     // console.log("data", data);
       setLikeCount(data.count);
       setLiked(data.liked);
     }
@@ -58,9 +53,10 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
   const commentCount = formatNumber(diary.commentCount ?? 0);
   const authorName = diary.author?.username;
   const profileImage = diary.author?.profileImageUrl || "/images/roopy.jpg";
+  const baseUrl= getBaseUrl();
+  const hasImage = diary.imageUrls?.[0] && diary.imageUrls?.[0].trim() !== "";
+  const mainImage = hasImage ? `data:image/jpeg;base64,${diary.imageUrls?.[0]}` : "/images/roopy.jpg";
 
-  const mainImage = diary.images?.find(img => img.isThumbnail) ||  diary.images?.[0];
-  
   const [likeCount, setLikeCount] = useState(diary.likeCount ?? 0);
   const [comment, setComment] = useState('');
 
@@ -105,7 +101,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         'Content-Type': 'application/json',
       }, 
       method: 'POST',
-      body: JSON.stringify({ diaryId: diary.id, comment }),
+      body: JSON.stringify({ diaryId: diary.diaryId, comment }),
     });
     // TODO: API 호출로 댓글 저장
     setComment(''); // 입력창 초기화
@@ -139,10 +135,10 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
       </div>
       
       {/* 이미지 */}
-      {/*TODO (추후 삭제 예정)현재 이미지가 없으면 기본 이미지 설정*/}
+      {/*TODO 일단 이미지1개만 고정 슬라이드 UI로 List형태 받아서 진행 예정*/}
       <div className="relative w-full">
           <Image
-              src={mainImage?.url || "/images/roopy.jpg"}
+              src={mainImage}
               alt={diary?.title}
               width={500}
               height={500}
@@ -249,7 +245,6 @@ export default function DiaryList(page = 0) {
     };
     loadDiaries();
   }, []);
-  // 첫 번째 다이어리를 추천으로 표시하고 나머지는 일반 피드로 표시
   if (!diaries || diaries.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">

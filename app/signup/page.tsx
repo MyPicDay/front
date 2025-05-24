@@ -2,6 +2,7 @@
 
 import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import api from '@/app/api/api';
 
 export default function SignupPage() {
   const [nickname, setNickname] = useState('');
@@ -25,25 +26,22 @@ export default function SignupPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname, email, password }),
+      const response = await api.post('/auth/signup', {
+        nickname,
+        email,
+        password,
       });
-
-      const result = await response.text();
-
+      const result = response.data;
       console.log("서버 응답:", result);
-
-      if (response.ok) {
-        setMessage('회원가입 성공! 로그인 페이지로 이동합니다.');
-        setTimeout(() => router.push('/login'), 2000);
+      setMessage('회원가입 성공! 로그인 페이지로 이동합니다.');
+      setTimeout(() => router.push('/login'), 1000);
+    } catch (error: any) {
+      if (error.response && error.response.data) {
+        setMessage(error.response.data.message || '회원가입 중 오류가 발생했습니다.');
       } else {
-        setMessage(result || '회원가입 중 오류가 발생했습니다.');
+        setMessage('네트워크 오류 또는 서버 문제로 회원가입에 실패했습니다.');
       }
-    } catch (error) {
-      setMessage('네트워크 오류 또는 서버 문제로 회원가입에 실패했습니다.');
-      console.error('Signup fetch error:', error);
+      console.error('Signup error:', error);
     }
     setIsLoading(false);
   };

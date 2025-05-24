@@ -5,7 +5,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import api from "@/app/api/api";
 import type {Page} from "@/app/types";
-import {getBaseUrl} from "@/lib/services/apiService";
 
 type Diary = {
   diaryId: number;
@@ -41,7 +40,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
     useEffect(() => {
     async function fetchDiary() {
       try {
-        const res = await api.get(`/diary/${diary.id}`); 
+        const res = await api.get(`/diary/${diary.diaryId}`); 
         const data = res.data;
         console.log(data)
         setLikeCount(data.count);
@@ -58,7 +57,6 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
   const commentCount = formatNumber(diary.commentCount ?? 0);
   const authorName = diary.author?.username;
   const profileImage = diary.author?.profileImageUrl || "/images/roopy.jpg";
-  const baseUrl= getBaseUrl();
   const hasImage = diary.imageUrls?.[0] && diary.imageUrls?.[0].trim() !== "";
   const mainImage = hasImage ? `data:image/jpeg;base64,${diary.imageUrls?.[0]}` : "/images/roopy.jpg";
 
@@ -79,7 +77,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         const result = await api.post(
           '/diary/like',
           {
-            diaryId: diary.id,
+            diaryId: diary.diaryId,
             liked: nextLiked, 
           },
           {
@@ -102,7 +100,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
       const result = await api.post(
         '/diary/comment',
         {
-          diaryId: diary.id,
+          diaryId: diary.diaryId,
           comment,
         },
         {

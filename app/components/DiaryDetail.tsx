@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image'; // Next.js Image 컴포넌트 사용
+import api from '@/app/api/api';
+import { formatDistanceToNow } from 'date-fns';
+import { ko } from 'date-fns/locale';
+
 
 // 아이콘 (Heroicons 예시 - 실제 프로젝트에서는 라이브러리 설치 또는 SVG 직접 사용)
 const HeartIcon = ({ className, filled }: { className?: string, filled?: boolean }) => (
@@ -35,11 +39,17 @@ interface User { // 임시 User 타입 (실제로는 API 응답에 맞춰야 함
   avatar: string;
 }
 
-interface Comment { // 임시 Comment 타입
+interface Comment {
   id: string;
   user: User;
   text: string;
   createdAt: string;
+  replies?: Comment[]; // Add replies array to Comment interface
+}
+
+interface CommentResponse {
+  name: string;
+  // Add other response fields as needed
 }
 
 interface Diary {
@@ -63,13 +73,15 @@ const formatNumber = (num: number) => {
   return num.toLocaleString();
 };
 
-
 export default function DiaryDetail({ diary }: { diary: Diary }) {
+
   // 목업 데이터 및 상태 (실제로는 diary prop에서 받거나, SWR/React Query 등으로 관리)
   const [liked, setLiked] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [visibleCommentCount, setVisibleCommentCount] = useState(3); // 초기에 보여줄 댓글 수
   const [scrollToCommentId, setScrollToCommentId] = useState<string | null>(null); // 스크롤 대상 댓글 ID 상태
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
 
   // diary 객체에 author, likes, comments가 없을 경우를 대비한 기본값 설정
   const author = diary.author || { id: diary.authorId, name: '홍길동', avatar: '/images/city-night.png' };
@@ -100,29 +112,174 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
 
   ];
   const [comments, setComments] = useState<Comment[]>(initialComments);
-
+  let timeout: NodeJS.Timeout;
+  let result : any;
   const handleLikeToggle = () => {
-    setLiked(!liked);
-    setLikeCount(prev => liked ? prev - 1 : prev + 1);
-    // TODO: API 호출로 좋아요 상태 업데이트
+    const nextLiked = !liked; 
+    setLiked(nextLiked);
+    setLikeCount(prev => prev + (nextLiked ? 1 : -1));
+    clearTimeout(timeout); 
+
+    const dateString = "2025-05-01"; // 예: 서버에서 받은 LocalDate
+    const date = new Date(dateString);
+
+    const result = formatDistanceToNow(date, { addSuffix: true, locale: ko });
+    console.log(result); // 예: "3주 전"
+
+  
+    timeout = setTimeout(async () => {
+      try {
+        const result = await api.post(
+          '/diary/like',
+          {
+            diaryId: diary.id,
+            liked: nextLiked, 
+
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        console.log('좋아요 업데이트 성공', result.data);
+      } catch (error) {
+        console.error('좋아요 업데이트 실패', error);
+      }
+    }, 1000);
   };
 
-  const handleCommentSubmit = (e: React.FormEvent) => {
+  const handleCommentSubmit = async (e: React.FormEvent) => { 
+    console.log(newComment);
+
     e.preventDefault();
-    if (!newComment.trim()) return;
+    if (!newComment.trim()) return;  
+   
+    try {
+       result = await api.post(
+        '/diary/comment',
+        {
+          diaryId: diary.id,
+          comment: newComment,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        } 
+      );
+      console.log(result);
+      setNewComment('');
+    } catch (error) {
+      console.error('댓글 전송 실패', error);
+    }
+
+
+    
     const newCommentObj: Comment = {
       id: `comment${comments.length + 1}`, // 실제 앱에서는 고유 ID 생성 방식 개선 필요
-      user: { id: 'currentUser', name: '나', avatar: '/images/avatar-city-night.png' }, // 현재 사용자 정보
+      user: { id: 'currentUser', name: result.name , avatar: '/images/cat-king.png' }, // 현재 사용자 정보
       text: newComment,
       createdAt: '방금',
     };
+    console.log(newCommentObj);
     const updatedComments = [...comments, newCommentObj];
     setComments(updatedComments);
     setVisibleCommentCount(updatedComments.length); // 새 댓글 작성 시 모든 댓글 보이도록 처리
     setNewComment('');
     setScrollToCommentId(newCommentObj.id); // 새 댓글로 스크롤 하도록 ID 설정
     // TODO: API 호출로 댓글 등록
+  }; 
+
+  const handleReplySubmit = async (e: React.FormEvent, parentCommentId: string) => {
+    e.preventDefault();
+    if (!replyText.trim()) return;
+
+    try {
+      const result = await api.post<CommentResponse>(
+        '/diary/comment/reply',
+        {
+          diaryId: diary.id,
+          parentCommentId: parentCommentId,
+          comment: replyText,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const newReply: Comment = {
+        id: `reply${comments.length + 1}`,
+        user: { id: 'currentUser', name: result.data.name, avatar: '/images/cat-king.png' },
+        text: replyText,
+        createdAt: '방금',
+      };
+
+      // Update comments to include the new reply
+      setComments(prev => prev.map(comment => {
+        if (comment.id === parentCommentId) {
+          return {
+            ...comment,
+            replies: [...(comment.replies || []), newReply]
+          };
+        }
+        return comment;
+      }));
+
+      setReplyText('');
+      setReplyingTo(null);
+    } catch (error) {
+      console.error('답글 전송 실패', error);
+    }
   };
+
+  const ReplyComponent = ({ reply }: { reply: Comment }) => (
+    <div className="ml-8 mt-2 flex items-start">
+      <div className="w-5 h-5 rounded-full overflow-hidden mr-2 mt-0.5">
+        <Image
+          src={reply.user.avatar || '/images/default-avatar.png'}
+          alt={reply.user.name}
+          width={20}
+          height={20}
+          className="object-cover w-full h-full"
+        />
+      </div>
+      <div className="flex-1">
+        <div>
+          <span className="font-semibold mr-1 text-zinc-800 dark:text-zinc-200">{reply.user.name}</span>
+          <span className="text-zinc-700 dark:text-zinc-300">{reply.text}</span>
+        </div>
+        <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 flex space-x-2">
+          <span>{reply.createdAt}</span>
+          <button 
+            onClick={() => setReplyingTo(replyingTo === reply.id ? null : reply.id)}
+            className="font-medium hover:underline"
+          >
+            답글 달기
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  useEffect(() => {
+    async function fetchDiary() {
+      try {
+        const res = await api.get(`/diary/${diary.id}`); 
+        const data = res.data;
+        console.log(data)
+        setLikeCount(data.count);
+        setLiked(data.liked);
+      } catch (error) {
+        setLikeCount(0);
+        setLiked(false);
+      }
+    }
+
+    fetchDiary();
+  }, []);
 
   useEffect(() => {
     if (scrollToCommentId) {
@@ -141,13 +298,13 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
         <div>
           {/* 작성자 정보 */}
           <div className="flex items-center p-3 border-b border-zinc-200 dark:border-zinc-700">
-            <Image
+            { <Image
               src={author.avatar}
               alt={author.name}
               width={32}
               height={32}
               className="rounded-full object-cover mr-3"
-            />
+            /> }
             <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">{author.name}</span>
             <button className="ml-auto text-zinc-500 dark:text-zinc-400">
               <DotsHorizontalIcon />
@@ -194,25 +351,87 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
           {/* 댓글 목록 - 내부 스크롤 영역에 포함 */}
           <div className="px-4 pb-4 space-y-1.5">
             {comments.slice(0, visibleCommentCount).map((comment) => (
-              <div key={comment.id} id={`comment-${comment.id}`} className="text-sm flex items-start"> {/* 각 댓글에 id 속성 추가 */}
-                <div className="w-6 h-6 rounded-full overflow-hidden mr-2 mt-0.5"> {/* 아바타 컨테이너에 원형, 크기, overflow, 마진 적용 */}
+              <div key={comment.id} id={`comment-${comment.id}`} className="text-sm flex items-start">
+                <div className="w-6 h-6 rounded-full overflow-hidden mr-2 mt-0.5">
                   <Image
-                    src={comment.user.avatar}
+                    src={comment.user.avatar || '/images/default-avatar.png'}
                     alt={comment.user.name}
                     width={24} 
                     height={24}
-                    className="object-cover w-full h-full" /* 이미지가 부모 div를 채우도록 object-cover와 w-full, h-full 적용 */
+                    className="object-cover w-full h-full"
                   />
                 </div>
-                <div>
+                <div className="flex-1">
                   <div>
                     <span className="font-semibold mr-1 text-zinc-800 dark:text-zinc-200">{comment.user.name}</span>
                     <span className="text-zinc-700 dark:text-zinc-300">{comment.text}</span>
                   </div>
                   <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 flex space-x-2">
                     <span>{comment.createdAt}</span>
-                    <button className="font-medium hover:underline">답글 달기</button>
+                    <button 
+                      onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                      className="font-medium hover:underline"
+                    >
+                      답글 달기
+                    </button>
                   </div>
+                  {/* Show replies if they exist */}
+                  {comment.replies && comment.replies.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      {comment.replies.map((reply) => (
+                        <ReplyComponent key={reply.id} reply={reply} />
+                      ))}
+                    </div>
+                  )}
+                  {replyingTo === comment.id && (
+                    <div className="mt-2 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-5 h-5 rounded-full overflow-hidden">
+                          <Image
+                            src="/images/cat-king.png"
+                            alt="Current user"
+                            width={20}
+                            height={20}
+                            className="object-cover w-full h-full"
+                          />
+                        </div>
+                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                          {comment.user.name}님에게 답글 작성 중
+                        </span>
+                      </div>
+                      <form 
+                        onSubmit={(e) => handleReplySubmit(e, comment.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <input
+                          type="text"
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          placeholder="답글을 입력하세요..."
+                          className="flex-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-full px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400"
+                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReplyingTo(null);
+                              setReplyText('');
+                            }}
+                            className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                          >
+                            취소
+                          </button>
+                          <button
+                            type="submit"
+                            className="bg-sky-500 hover:bg-sky-600 text-white font-medium text-sm px-4 py-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={!replyText.trim()}
+                          >
+                            답글
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

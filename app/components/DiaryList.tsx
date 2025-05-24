@@ -1,22 +1,25 @@
 'use client';
 
-import { useState , useEffect } from 'react';
+import {useEffect, useState} from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import api from "@/app/api/api";
+import type {Page} from "@/app/types";
+import {getBaseUrl} from "@/lib/services/apiService";
 
 type Diary = {
-  id: number;
+  diaryId: number;
   title: string;
   content: string;
-  date: string;
+  createdAt: string;
   authorId: string;
-  image: string;
+  imageUrls: string[];
   author?: {
-    name: string;
-    image: string;
+    username: string;
+    profileImageUrl: string;
   };
-  likes?: number;
-  comments?: number;
+  likeCount?: number;
+  commentCount?: number;
 };
 
 // 요약된 숫자 표시 함수 (예: 1.2만, 293.4만)
@@ -33,62 +36,88 @@ const formatNumber = (num: number): string => {
   return num.toString();
 };
 
-const DiaryFeedItem = ({ diary }: { diary: Diary }) => { 
+const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
 
-  useEffect(() => {
+    useEffect(() => {
     async function fetchDiary() {
-      const res = await fetch(`http://localhost:8080/api/diary/1`);
-      const data = await res.json();
-      setLikeCount(data.count);
+      try {
+        const res = await api.get(`/diary/${diary.id}`); 
+        const data = res.data;
+        console.log(data)
+        setLikeCount(data.count);
+        setLiked(data.liked);
+      } catch (error) {
+        setLikeCount(0);
+        setLiked(false);
+      }
     }
-   fetchDiary();
+    fetchDiary();
   }, []);
 
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(diary.likes || Math.floor(Math.random() * 500000) + 1000);
+  const commentCount = formatNumber(diary.commentCount ?? 0);
+  const authorName = diary.author?.username;
+  const profileImage = diary.author?.profileImageUrl || "/images/roopy.jpg";
+  const baseUrl= getBaseUrl();
+  const hasImage = diary.imageUrls?.[0] && diary.imageUrls?.[0].trim() !== "";
+  const mainImage = hasImage ? `data:image/jpeg;base64,${diary.imageUrls?.[0]}` : "/images/roopy.jpg";
+
+  const [likeCount, setLikeCount] = useState(diary.likeCount ?? 0);
   const [comment, setComment] = useState('');
-  const commentCount = diary.comments || Math.floor(Math.random() * 50000) + 100;
-  
+
   // 랜덤 이름 (실제로는 API에서 가져온 데이터 사용)
-  const authorName = diary.author?.name || "홍길동";
-  const profileImage = diary.author?.image || "/images/cat-king.png";   
   let timeout: NodeJS.Timeout;
 
-  function handleLikeToggle() { 
-    setLiked(prev => !prev);
-    console.log("전 liked", likeCount);
-  
-    // setLikeCount(prev => liked ? prev - 1 : prev + 1)
-    console.log("liked", likeCount);
-    clearTimeout(timeout); // 이전의 setTimeout을 취소 
-  
-  
+  function handleLikeToggle() {
+    const nextLiked = !liked; 
+    setLiked(nextLiked);
+    setLikeCount(prev => prev + (nextLiked ? 1 : -1));
+    clearTimeout(timeout);
 
-    timeout = setTimeout(async() => {  
-    
-    const result = await fetch('http://localhost:8080/api/diary/like', {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-      body: JSON.stringify({ diaryId: diary.id, liked  }),
-    });
-    // 1초 후 API 호출로 DB에 좋아요 상태를 업데이트
-  }, 1000); // 1초 후에 API 호출
+    timeout = setTimeout(async () => {
+      try {
+        const result = await api.post(
+          '/diary/like',
+          {
+            diaryId: diary.id,
+            liked: nextLiked, 
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        console.log('좋아요 업데이트 성공', result.data);
+      } catch (error) {
+        console.error('좋아요 업데이트 실패', error);
+      }
+    }, 1000);
   }
-
+  
   async function handleCommentSubmit() {
+    
     if (!comment.trim()) return;
-    const result = await fetch('http://localhost:8080/api/diary/comment', {
-      headers: {
-        'Content-Type': 'application/json',
-      }, 
-      method: 'POST',
-      body: JSON.stringify({ diaryId: diary.id, comment }),
-    });
-    // TODO: API 호출로 댓글 저장
-    setComment(''); // 입력창 초기화
+    try {
+      const result = await api.post(
+        '/diary/comment',
+        {
+          diaryId: diary.id,
+          comment,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      alert("댓글 등록 되었습니다.");
+      setComment('');
+    } catch (error) {
+      console.error('댓글 전송 실패', error);
+    }
   }
+  
 
   function handleCommentChange(e: React.ChangeEvent<HTMLInputElement>) {
     setComment(e.target.value);
@@ -101,7 +130,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         <div className="w-10 h-10 rounded-full overflow-hidden mr-3 ">
           <Image 
             src={profileImage} 
-            alt={authorName} 
+            alt={authorName ?? ""}
             width={40} 
             height={40} 
             className="object-cover"
@@ -118,16 +147,17 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
       </div>
       
       {/* 이미지 */}
+      {/*TODO 일단 이미지1개만 고정 슬라이드 UI로 List형태 받아서 진행 예정*/}
       <div className="relative w-full">
-        <Image
-          src={diary.image}
-          alt={diary.title}
-          width={500}
-          height={500}
-          className="w-full h-auto object-cover"
-          loading="lazy"
-          priority={false}
-        />
+          <Image
+              src={mainImage}
+              alt={diary?.title}
+              width={500}
+              height={500}
+              className="w-full h-auto object-cover"
+              loading="lazy"
+              priority={false}
+          />
       </div>
       
       {/* 상호작용 버튼 */}
@@ -149,7 +179,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
             )}
           </button>
           
-          <Link href={`/diary/${diary.id}`} aria-label="댓글">
+          <Link href={`/diary/${diary.diaryId}`} aria-label="댓글">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
@@ -158,12 +188,12 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         
         {/* 좋아요 수 */}
         <div className="font-semibold text-zinc-900 dark:text-white mb-1">
-          좋아요 {formatNumber(liked ? likeCount + 1 : likeCount)}개
+          좋아요 {formatNumber(likeCount)}개
         </div>
         
         {/* 제목과 내용 */}
         <div className="mb-1">
-          <Link href={`/diary/${diary.id}`} className="font-semibold text-zinc-900 dark:text-white mr-2 inline-block">
+          <Link href={`/diary/${diary.diaryId}`} className="font-semibold text-zinc-900 dark:text-white mr-2 inline-block">
             {authorName}
           </Link>
           <span className="text-zinc-700 dark:text-zinc-300 truncate">{diary.title}</span>
@@ -171,14 +201,14 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         
         {/* 댓글 보기 */}
         <div className="text-zinc-500 dark:text-zinc-400 text-sm">
-          <Link href={`/diary/${diary.id}`}>
-            댓글 {formatNumber(commentCount)}개 모두 보기
+          <Link href={`/diary/${diary.diaryId}`}>
+            댓글 {commentCount}개 모두 보기
           </Link>
         </div>
         
         {/* 작성 날짜 */}
         <time className="text-xs text-zinc-500 dark:text-zinc-400 block mt-1">
-          {new Date(diary.date).toLocaleDateString('ko-KR')}
+          {new Date(diary.createdAt).toLocaleDateString('ko-KR')}
         </time>
       </div>
       
@@ -207,23 +237,37 @@ const RecommendedDiary = ({ diary }: { diary: Diary }) => {
   );
 };
 
-export default function DiaryList({ items }: { items: Diary[] }) {
-  // 첫 번째 다이어리를 추천으로 표시하고 나머지는 일반 피드로 표시
-  if (!items || items.length === 0) {
+export default function DiaryList(page = 0) {
+  console.log()
+  const [diaries, setDiaries] = useState<Diary[]>([]);
+  useEffect(() => {
+    const loadDiaries  = async () => {
+      try {
+        const res = await api.get<Page<Diary>>('/diaries', {
+          params: {
+            page: page,
+            sort: 'createdAt,desc'
+          }
+        });
+        setDiaries(res.data.content);
+      } catch (e) {
+        console.error(e);
+        setDiaries([]);
+      }
+    };
+    loadDiaries();
+  }, []);
+  if (!diaries || diaries.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
         <p className="text-zinc-600 dark:text-zinc-400">등록된 일기가 없습니다.</p>
       </div>
     );
   }
-
-  const regularDiaries = items
-
   return (
     <section className="container mx-auto px-4 py-8 max-w-lg">
-
-      {regularDiaries.map((diary) => (
-        <DiaryFeedItem key={diary.id} diary={diary} />
+      {diaries.map((diary) => (
+        <DiaryFeedItem key={diary.diaryId} diary={diary} />
       ))}
     </section>
   );

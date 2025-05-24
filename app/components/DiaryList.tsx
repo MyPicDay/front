@@ -3,14 +3,8 @@
 import {useEffect, useState} from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import api from "@/app/api/api";
-import type {Page} from "@/app/types";
 
-type ImageInfo = {
-  url: string;
-  isThumbnail: boolean;
-};
-
+import api from '@/app/api/api';
 type Diary = {
   diaryId: number;
   title: string;
@@ -40,16 +34,20 @@ const formatNumber = (num: number): string => {
   return num.toString();
 };
 
-const DiaryFeedItem = ({ diary }: { diary: Diary }) => { 
+const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
 
     useEffect(() => {
     async function fetchDiary() {
-      console.log("diary", diary.id);
-      const res = await api.get(`/diary/${diary.id}`);
-      const data = res.data;
-     // console.log("data", data);
-      setLikeCount(data.count);
-      setLiked(data.liked);
+      try {
+        const res = await api.get(`/diary/${diary.id}`); 
+        const data = res.data;
+        console.log(data)
+        setLikeCount(data.count);
+        setLiked(data.liked);
+      } catch (error) {
+        setLikeCount(0);
+        setLiked(false);
+      }
     }
     fetchDiary();
   }, []);
@@ -67,21 +65,19 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
   // 랜덤 이름 (실제로는 API에서 가져온 데이터 사용)
   let timeout: NodeJS.Timeout;
 
-  function handleLikeToggle() { 
-    setLiked(prev => !prev);
-    console.log("전 liked", likeCount);
-  
-    // setLikeCount(prev => liked ? prev - 1 : prev + 1)
-    console.log("liked", likeCount);
-    clearTimeout(timeout); // 이전의 setTimeout을 취소 
+  function handleLikeToggle() {
+    const nextLiked = !liked; 
+    setLiked(nextLiked);
+    setLikeCount(prev => prev + (nextLiked ? 1 : -1));
+    clearTimeout(timeout);
 
     timeout = setTimeout(async () => {
       try {
         const result = await api.post(
           '/diary/like',
           {
-            diaryId: 1,
-            liked: liked,
+            diaryId: diary.id,
+            liked: nextLiked, 
           },
           {
             headers: {
@@ -89,27 +85,36 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
             },
           }
         );
-    
-        // 결과 처리 (예: 콘솔 출력 등)
         console.log('좋아요 업데이트 성공', result.data);
       } catch (error) {
         console.error('좋아요 업데이트 실패', error);
       }
     }, 1000);
   }
-
+  
   async function handleCommentSubmit() {
+    
     if (!comment.trim()) return;
-    const result = await api.post('/diary/comment', {
-      headers: {
-        'Content-Type': 'application/json',
-      }, 
-      method: 'POST',
-      body: JSON.stringify({ diaryId: diary.id, comment }),
-    });
-    // TODO: API 호출로 댓글 저장
-    setComment(''); // 입력창 초기화
+    try {
+      const result = await api.post(
+        '/diary/comment',
+        {
+          diaryId: diary.id,
+          comment,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      alert("댓글 등록 되었습니다.");
+      setComment('');
+    } catch (error) {
+      console.error('댓글 전송 실패', error);
+    }
   }
+  
 
   function handleCommentChange(e: React.ChangeEvent<HTMLInputElement>) {
     setComment(e.target.value);
@@ -180,7 +185,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         
         {/* 좋아요 수 */}
         <div className="font-semibold text-zinc-900 dark:text-white mb-1">
-          좋아요 {likeCount}개
+          좋아요 {formatNumber(likeCount)}개
         </div>
         
         {/* 제목과 내용 */}

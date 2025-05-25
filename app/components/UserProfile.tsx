@@ -1,17 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import {useEffect, useState} from 'react';
 import ProfileCalendar from './calendar';
 import FollowersListClient from './FollowersListClient';
 import FollowingsListClient from './FollowingsListClient';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-}
+import useAuthStore from '@/lib/store/authStore';
 
 interface Stats {
   diaryCount: number;
@@ -19,21 +12,12 @@ interface Stats {
   followingCount: number;
 }
 
-interface Diary {
-  id: number;
-  title: string;
-  content: string;
-  date: string;
-  authorId: string;
-  image: string;
-}
-
 interface UserProfileProps {
   userId: string;
 }
 
-export default function UserProfile({ userId }: UserProfileProps) {
-  const [user, setUser] = useState<User | null>(null);
+export default function UserProfile() {
+  const user = useAuthStore((state) => state.user);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'diary' | 'followers' | 'followings'>('diary');
@@ -44,14 +28,13 @@ export default function UserProfile({ userId }: UserProfileProps) {
     // TODO: 구현이 끝나면 경로를 변경해주세요
     // const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-    fetch(`${baseUrl}/api/mock/profile/${userId}`)
+    fetch(`${baseUrl}/api/mock/profile/mock-uuid-user-1`)
       .then(r => r.json())
       .then(data => {
-        setUser(data.user);
         setStats(data.stats);
         setLoading(false);
       });
-  }, [userId]);
+  }, [user]);
 
   if (loading || !user || !stats) {
     return (
@@ -74,12 +57,12 @@ export default function UserProfile({ userId }: UserProfileProps) {
         <div className="flex flex-col items-center md:flex-row md:items-start">
           <img 
             src={user.avatar || '/mockups/avatar-placeholder.png'} 
-            alt={`${user.name}의 프로필 이미지`} 
+            alt={`${user.nickname}의 프로필 이미지`} 
             className="w-32 h-32 rounded-full object-cover border-2 border-indigo-500 dark:border-indigo-400 shadow-lg"
           />
           
           <div className="mt-4 md:mt-0 md:ml-8 text-center md:text-left">
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">{user.name}</h1>
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">{user.nickname}</h1>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">{user.email}</p>
             
             {/* 통계 정보 */}
@@ -110,4 +93,4 @@ export default function UserProfile({ userId }: UserProfileProps) {
       </div>
     </div>
   );
-} 
+}

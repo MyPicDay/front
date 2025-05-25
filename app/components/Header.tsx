@@ -1,13 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import {usePathname, useRouter} from 'next/navigation';
+import {useEffect, useRef, useState} from 'react';
 import useAuthStore from '@/lib/store/authStore';
+import api from '../api/api';
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
+  const [keyword, setKeyword] = useState('');
   const logout = useAuthStore((state) => state.logout);
   // TODO: 로그인 후 유저 아이디 가져오기
   const userId = 'mock-uuid-user-1'
@@ -17,6 +19,25 @@ export default function Header() {
   
   // 화면 사이즈 상태 (모바일 뷰 감지용)
   const [isMobile, setIsMobile] = useState(false);
+
+
+  const handleLogout = async () => {
+  try {
+    await api.post('/auth/logout', {}, { withCredentials: true }); // refreshToken 쿠키 삭제
+    logout(); // Zustand 상태 초기화
+    router.push('/login'); // 로그아웃 후 이동
+  } catch (error) {
+    console.error('로그아웃 실패:', error);
+  }
+};
+
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && keyword.trim()) {
+      router.push(`/search?q=${encodeURIComponent(keyword)}`);
+    }
+  };
+
 
   // 알림 데이터 가져오기 (mock)
   useEffect(() => {
@@ -84,6 +105,9 @@ export default function Header() {
             <input
               type="search"
               placeholder="검색"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="pl-10 pr-4 py-2 w-full rounded-full bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -158,10 +182,9 @@ export default function Header() {
                   </Link>
                   <div className="border-t border-zinc-200 dark:border-zinc-700"></div>
                   <button
-                    onClick={() => {
+                    onClick={() => { 
                       console.log('로그아웃 클릭');
-                      logout();
-                      router.push('/login');
+                      handleLogout();
                       setIsProfileMenuOpen(false);
                     }}
                     className="block w-full text-left px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-700"

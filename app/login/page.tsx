@@ -12,7 +12,6 @@ export default function LoginPage() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const login = useAuthStore((state) => state.login);
 
   // TODO: Zustand 또는 React Context로 로그인 상태 및 사용자 정보 관리
   // const { login } = useAuthStore(); 
@@ -26,31 +25,34 @@ export default function LoginPage() {
       const response = await api.post('/auth/login', {
         email,
         password,
+      }, {
+        withCredentials: true
       });
 
       let token: string | null = null;
-      // ✅ 헤더에서 토큰 추출 (만약 서버가 헤더에 담는 구조라면)
       const authHeader = response.headers['authorization'];
+      const user = response.data.user;
       if (authHeader && authHeader.startsWith('Bearer ')) {
         token = authHeader.slice(7);
         if (token != null) {
           localStorage.setItem('accessToken', token);
         }
         console.log('토큰 저장 완료:', token);
+        console.log(document.cookie);
 
       } else {
         console.warn('응답 헤더에 토큰이 없습니다.');
       }
 
-      setMessage('로그인 성공! 메인 페이지로 이동합니다.');
-      if (token != null) {
-        login(token, '');
+      if (token && user) {
+        useAuthStore.getState().login(user);
+        setMessage('로그인 성공! 메인 페이지로 이동합니다.');
+        setTimeout(() => router.push('/'), 1000);
       }
-      setTimeout(() => router.push('/'), 1000);
     } catch (error: any) {
       const message = error.response?.data?.message || '로그인 중 오류 발생';
       setMessage(message);
-      console.error('❌ 로그인 실패:', message);
+      console.error('로그인 실패:', message);
     }
     setIsLoading(false);
   };

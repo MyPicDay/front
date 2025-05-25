@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image'; // Next.js Image 컴포넌트 사용
 import api from '@/app/api/api';
+
 import {format, formatDistanceToNow } from 'date-fns';
+
 import { ko } from 'date-fns/locale';
 
 
@@ -40,7 +42,9 @@ interface User { // 임시 User 타입 (실제로는 API 응답에 맞춰야 함
 }
 
 interface Comment {
+
   id: number;
+
   user: User;
   text: string;
   createdAt: string;
@@ -48,10 +52,12 @@ interface Comment {
 }
 
 interface CommentResponse {
+
   id: number;
   name: string;
   avatar: string;
   date: string;
+
   // Add other response fields as needed
 }
 
@@ -82,6 +88,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
   const [liked, setLiked] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [visibleCommentCount, setVisibleCommentCount] = useState(3); // 초기에 보여줄 댓글 수
+
   const [scrollToCommentId, setScrollToCommentId] = useState<number | null>(null); // 스크롤 대상 댓글 ID 상태
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState('');
@@ -96,6 +103,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
     
 
   ];
+
 
   
   function formatDate(date: Date) {
@@ -129,11 +137,14 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
   const [comments, setComments] = useState<Comment[]>(initialComments);
   let timeout: NodeJS.Timeout;
   
+
   const handleLikeToggle = () => {
     const nextLiked = !liked; 
     setLiked(nextLiked);
     setLikeCount(prev => prev + (nextLiked ? 1 : -1));
+
     clearTimeout(timeout);  
+
 
     timeout = setTimeout(async () => {
       try {
@@ -195,6 +206,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
     }
   }; 
 
+
   const handleReplySubmit = async (e: React.FormEvent, parentCommentId: number) => {
     e.preventDefault();
     if (!replyText.trim()) return;
@@ -202,6 +214,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
     try {
       const reply = await api.post<CommentResponse>(
         '/diary/reply',
+
         {
           diaryId: diary.id,
           parentCommentId: parentCommentId,
@@ -219,11 +232,14 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
         user: { name: reply.data.name, avatar: reply.data.avatar },
         text: replyText,
         createdAt: formatDate(currentTime),
+
       };
 
       // Update comments to include the new reply
       setComments(prev => prev.map(comment => {
+
         if (comment.id === Number(parentCommentId)) {
+
           return {
             ...comment,
             replies: [...(comment.replies || []), newReply]
@@ -273,7 +289,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
       try {
         const res = await api.get(`/diary/${diary.id}`); 
         const data = res.data;
-        console.log(data);
+
         setLikeCount(data.count);
         setLiked(data.liked);
       } catch (error) {
@@ -302,13 +318,13 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
         <div>
           {/* 작성자 정보 */}
           <div className="flex items-center p-3 border-b border-zinc-200 dark:border-zinc-700">
-            <Image
+            { <Image
               src={author.avatar}
               alt={author.name}
               width={32}
               height={32}
               className="rounded-full object-cover mr-3"
-            />
+            /> }
             <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">{author.name}</span>
             <button className="ml-auto text-zinc-500 dark:text-zinc-400">
               <DotsHorizontalIcon />
@@ -381,7 +397,9 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
                   {/* Show replies if they exist */}
                   {comment.replies && comment.replies.length > 0 && (
                     <div className="mt-2 space-y-2">
+
                       {comment.replies.map((reply: Comment) => (
+
                         <ReplyComponent key={reply.id} reply={reply} />
                       ))}
                     </div>

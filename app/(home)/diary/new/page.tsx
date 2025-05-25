@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef, ChangeEvent, useEffect } from 'react';
+import {ChangeEvent, useEffect, useRef, useState} from 'react';
 import Image from 'next/image';
+
 import { useSearchParams, ReadonlyURLSearchParams, useRouter } from 'next/navigation';
 import api from '@/app/api/api';
 
@@ -446,6 +447,9 @@ export default function DiaryNewPage() {
     // 실제 구현에서는 여기서 최종 저장 API를 호출합니다
     alert('일기가 저장되었습니다!');
     router.push(`/calendar/${result.data.id}`);
+
+    // 실제 구현에서는 여기서 최종 저장 API를 호출합니다
+
   };
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {

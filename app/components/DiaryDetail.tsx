@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image'; // Next.js Image 컴포넌트 사용
 import api from '@/app/api/api';
-import { formatDistanceToNow } from 'date-fns';
+import {format, formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 
@@ -34,13 +34,13 @@ const PaperAirplaneIcon = ({ className }: { className?: string }) => (
 
 
 interface User { // 임시 User 타입 (실제로는 API 응답에 맞춰야 함)
-  id: string;
+ // id: string; 
   name: string;
   avatar: string;
 }
 
 interface Comment {
-  id: string;
+  id: number;
   user: User;
   text: string;
   createdAt: string;
@@ -48,7 +48,10 @@ interface Comment {
 }
 
 interface CommentResponse {
+  id: number;
   name: string;
+  avatar: string;
+  date: string;
   // Add other response fields as needed
 }
 
@@ -79,8 +82,8 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
   const [liked, setLiked] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [visibleCommentCount, setVisibleCommentCount] = useState(3); // 초기에 보여줄 댓글 수
-  const [scrollToCommentId, setScrollToCommentId] = useState<string | null>(null); // 스크롤 대상 댓글 ID 상태
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [scrollToCommentId, setScrollToCommentId] = useState<number | null>(null); // 스크롤 대상 댓글 ID 상태
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState('');
 
   // diary 객체에 author, likes, comments가 없을 경우를 대비한 기본값 설정
@@ -89,44 +92,49 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
   const [likeCount, setLikeCount] = useState(initialLikes);
   
   const initialComments: Comment[] = diary.comments || [
-    { id: 'comment1', user: { id: 'user1', name: '김철수', avatar: '/images/city-night.png' }, text: '고양이 이쁘네요!', createdAt: '1주' },
-    { id: 'comment2', user: { id: 'user2', name: '박영희', avatar: '/images/city-night.png' }, text: '정말 귀여워요 😍', createdAt: '1주' },
-    { id: 'comment3', user: { id: 'user3', name: author.name, avatar: author.avatar }, text: '감사합니다! 😊', createdAt: '1주' },
-    { id: 'comment4', user: { id: 'user4', name: '이하나', avatar: '/images/city-night.png' }, text: '너무 멋진 사진이네요!', createdAt: '2주' },
-    { id: 'comment5', user: { id: 'user5', name: '최다윗', avatar: '/images/city-night.png' }, text: '저도 가보고 싶어요.', createdAt: '2주' },
-    { id: 'comment6', user: { id: 'user6', name: '윤지민', avatar: '/images/city-night.png' }, text: '최고예요!', createdAt: '3주' },
-    { id: 'comment7', user: { id: 'user6', name: '윤지민', avatar: '/images/city-night.png' }, text: '최고예요!', createdAt: '3주' },
-    { id: 'comment8', user: { id: 'user6', name: '윤지민', avatar: '/images/city-night.png' }, text: '최고예요!', createdAt: '3주' },
-    { id: 'comment9', user: { id: 'user6', name: '윤지민', avatar: '/images/city-night.png' }, text: '최고예요!', createdAt: '3주' },
-    { id: 'comment0', user: { id: 'user6', name: '윤지민', avatar: '/images/city-night.png' }, text: '최고예요!', createdAt: '3주' },
-    { id: 'comment01', user: { id: 'user6', name: '윤지민', avatar: '/images/city-night.png' }, text: '최고예요!', createdAt: '3주' },
-    { id: 'comment02', user: { id: 'user6', name: '윤지민', avatar: '/images/city-night.png' }, text: '최고예요!', createdAt: '3주' },
-    { id: 'comment03', user: { id: 'user6', name: '윤지민', avatar: '/images/city-night.png' }, text: '최고예요!', createdAt: '3주' },
-    { id: 'comment04', user: { id: 'user6', name: '윤지민', avatar: '/images/city-night.png' }, text: '최고예요!', createdAt: '3주' },
-    { id: 'comment05', user: { id: 'user6', name: '윤지민', avatar: '/images/city-night.png' }, text: '최고예요!', createdAt: '3주' },
-    { id: 'comment06', user: { id: 'user6', name: '윤지민', avatar: '/images/city-night.png' }, text: '최고예요!', createdAt: '3주' },
-    { id: 'comment07', user: { id: 'user6', name: '윤지민', avatar: '/images/city-night.png' }, text: '최고예요!', createdAt: '3주' },
-    { id: 'comment09', user: { id: 'user6', name: '윤지민', avatar: '/images/city-night.png' }, text: '최고예요!', createdAt: '3주' },
-    { id: 'comment10', user: { id: 'user6', name: '윤지민', avatar: '/images/city-night.png' }, text: '최고예요!', createdAt: '3주' },
-    { id: 'comment11', user: { id: 'user6', name: '윤지민', avatar: '/images/city-night.png' }, text: '최고예요!', createdAt: '3주' },
+    { id: 0, user: { name: '김철수', avatar: '/images/city-night.png' }, text: '고양이 이쁘네요!', createdAt: '1주' },
+    
 
   ];
+
+  
+  function formatDate(date: Date) {
+  
+    const d = new Date(date);
+    const now = new Date();
+    
+    // 한국 시간대로 변환 (UTC+9)
+    const kstOffset = 9 * 60 * 60 * 1000; // 9시간을 밀리초로 변환
+    const kstNow = new Date(now.getTime() + kstOffset);
+    const kstDate = new Date(d.getTime() + kstOffset);
+    
+    
+    const diff = Math.max(0, (kstNow.getTime() - kstDate.getTime()) / 1000);
+    
+    
+    // 2시간(7200초) 이내면 "방금 전" 표시
+    if (diff < 7200) {
+      return "방금 전";
+    }
+    // 3일 이내면 상대적 시간 표시
+    if (diff < 60 * 60 * 24 * 3) {
+      return formatDistanceToNow(d, { addSuffix: true, locale: ko });
+    }
+    // 그 외에는 전체 날짜 표시
+    return format(d, 'PPP EEE p', { locale: ko });
+  } 
+
+
+
   const [comments, setComments] = useState<Comment[]>(initialComments);
   let timeout: NodeJS.Timeout;
-  let result : any;
+  
   const handleLikeToggle = () => {
     const nextLiked = !liked; 
     setLiked(nextLiked);
     setLikeCount(prev => prev + (nextLiked ? 1 : -1));
-    clearTimeout(timeout); 
+    clearTimeout(timeout);  
 
-    const dateString = "2025-05-01"; // 예: 서버에서 받은 LocalDate
-    const date = new Date(dateString);
-
-    const result = formatDistanceToNow(date, { addSuffix: true, locale: ko });
-    console.log(result); // 예: "3주 전"
-
-  
     timeout = setTimeout(async () => {
       try {
         const result = await api.post(
@@ -148,15 +156,13 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
       }
     }, 1000);
   };
-
+  let respnse : any;
   const handleCommentSubmit = async (e: React.FormEvent) => { 
-    console.log(newComment);
-
     e.preventDefault();
     if (!newComment.trim()) return;  
    
     try {
-       result = await api.post(
+       respnse = await api.post(
         '/diary/comment',
         {
           diaryId: diary.id,
@@ -168,36 +174,34 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
           },
         } 
       );
-      console.log(result);
+      
+      // 현재 시간을 사용하여 댓글 생성 시간 설정
+      const currentTime = new Date();
+      const newCommentObj: Comment = {
+        id: respnse.data.id, 
+        user: { name: respnse.data.name, avatar: respnse.data.avatar }, 
+        text: newComment,
+        createdAt: formatDate(currentTime), // API 응답의 date 대신 현재 시간 사용
+      };
+      
+      console.log('New comment with current time:', newCommentObj);
+      const updatedComments = [...comments, newCommentObj];
+      setComments(updatedComments);
+      setVisibleCommentCount(updatedComments.length);
       setNewComment('');
+      setScrollToCommentId(newCommentObj.id);
     } catch (error) {
       console.error('댓글 전송 실패', error);
     }
-
-
-    
-    const newCommentObj: Comment = {
-      id: `comment${comments.length + 1}`, // 실제 앱에서는 고유 ID 생성 방식 개선 필요
-      user: { id: 'currentUser', name: result.name , avatar: '/images/cat-king.png' }, // 현재 사용자 정보
-      text: newComment,
-      createdAt: '방금',
-    };
-    console.log(newCommentObj);
-    const updatedComments = [...comments, newCommentObj];
-    setComments(updatedComments);
-    setVisibleCommentCount(updatedComments.length); // 새 댓글 작성 시 모든 댓글 보이도록 처리
-    setNewComment('');
-    setScrollToCommentId(newCommentObj.id); // 새 댓글로 스크롤 하도록 ID 설정
-    // TODO: API 호출로 댓글 등록
   }; 
 
-  const handleReplySubmit = async (e: React.FormEvent, parentCommentId: string) => {
+  const handleReplySubmit = async (e: React.FormEvent, parentCommentId: number) => {
     e.preventDefault();
     if (!replyText.trim()) return;
 
     try {
-      const result = await api.post<CommentResponse>(
-        '/diary/comment/reply',
+      const reply = await api.post<CommentResponse>(
+        '/diary/reply',
         {
           diaryId: diary.id,
           parentCommentId: parentCommentId,
@@ -209,17 +213,17 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
           },
         }
       );
-
+      const currentTime = new Date();
       const newReply: Comment = {
-        id: `reply${comments.length + 1}`,
-        user: { id: 'currentUser', name: result.data.name, avatar: '/images/cat-king.png' },
+        id: reply.data.id,
+        user: { name: reply.data.name, avatar: reply.data.avatar },
         text: replyText,
-        createdAt: '방금',
+        createdAt: formatDate(currentTime),
       };
 
       // Update comments to include the new reply
       setComments(prev => prev.map(comment => {
-        if (comment.id === parentCommentId) {
+        if (comment.id === Number(parentCommentId)) {
           return {
             ...comment,
             replies: [...(comment.replies || []), newReply]
@@ -269,7 +273,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
       try {
         const res = await api.get(`/diary/${diary.id}`); 
         const data = res.data;
-        console.log(data)
+        console.log(data);
         setLikeCount(data.count);
         setLiked(data.liked);
       } catch (error) {
@@ -298,13 +302,13 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
         <div>
           {/* 작성자 정보 */}
           <div className="flex items-center p-3 border-b border-zinc-200 dark:border-zinc-700">
-            { <Image
+            <Image
               src={author.avatar}
               alt={author.name}
               width={32}
               height={32}
               className="rounded-full object-cover mr-3"
-            /> }
+            />
             <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">{author.name}</span>
             <button className="ml-auto text-zinc-500 dark:text-zinc-400">
               <DotsHorizontalIcon />
@@ -334,7 +338,6 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
               <button className="text-zinc-700 dark:text-zinc-300">
                 <ChatBubbleIcon />
               </button>
-              {/* 더 많은 버튼 (예: 공유) 은 생략 */}
             </div>
 
             <div className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 mb-1">
@@ -344,7 +347,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
             {/* 일기 내용 (본문) */}
             <div className="text-sm text-zinc-800 dark:text-zinc-200 mb-2">
               <span className="font-semibold mr-1">{author.name}</span>
-              {diary.title} {/* 또는 diary.content, 필요에 따라 확장 가능 */}
+              {diary.title}
             </div>
           </div>
           
@@ -378,7 +381,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
                   {/* Show replies if they exist */}
                   {comment.replies && comment.replies.length > 0 && (
                     <div className="mt-2 space-y-2">
-                      {comment.replies.map((reply) => (
+                      {comment.replies.map((reply: Comment) => (
                         <ReplyComponent key={reply.id} reply={reply} />
                       ))}
                     </div>
@@ -448,7 +451,6 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
 
         {/* 하단 고정 영역: 댓글 입력창 */}
         <form onSubmit={handleCommentSubmit} className="border-t border-zinc-200 dark:border-zinc-700 p-3 flex items-center bg-white dark:bg-zinc-900">
-          {/* 현재 사용자 아바타 (선택 사항) */}
           <input
             type="text"
             value={newComment}
@@ -467,4 +469,4 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
       </div>
     </main>
   );
-} 
+}  

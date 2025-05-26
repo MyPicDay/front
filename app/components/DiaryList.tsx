@@ -5,7 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import api from '@/app/api/api';
+
 import type {Page} from "@/app/types";    
+
 
 type Diary = {
   diaryId: number;
@@ -42,7 +44,9 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
     async function fetchDiary() {
       try {
 
+
         const res = await api.get(`/diary/${diary.diaryId}`); 
+
 
         const data = res.data;
         console.log(data)
@@ -82,7 +86,9 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
           '/diary/like',
           {
 
+
             diaryId: diary.diaryId,
+
             liked: nextLiked, 
             
           },
@@ -108,7 +114,9 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         '/diary/comment',
         {
 
+
           diaryId: diary.diaryId,
+
 
           comment,
         },

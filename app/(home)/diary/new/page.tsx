@@ -328,13 +328,34 @@ export default function DiaryNewPage() {
   const searchParams = useSearchParams();
   const [currentDate, setCurrentDate] = useState('');
   const [pageTitle, setPageTitle] = useState('오늘의 일기');
+  const date = new Date();
+  const yyyyMMdd = date.toISOString().slice(0, 10); 
 
   useEffect(() => {
+    
     const { determinedDate, newPageTitle } = determineDateAndTitle(searchParams); 
    
     setCurrentDate(determinedDate);
     setPageTitle(newPageTitle);
   }, [searchParams]);
+
+  useEffect(() => { 
+    
+      const fetchDiary = async () => {
+      const res = await api.get(`/diary?date=${yyyyMMdd}`);
+    
+      const {title, content, status, imagesList} = res.data; 
+ 
+      setTitle(title);
+      setContent(content);
+      console.log(imagesList)
+      setVisibility(status.toLowerCase() || 'public');
+    
+      setImages(imagesList || []);
+    
+    }
+    fetchDiary();
+  }, []);
 
   // 모든 이미지 (서버 이미지 + 업로드된 이미지)
   const allImages = [...images, ...uploadPreviews];
@@ -435,6 +456,7 @@ export default function DiaryNewPage() {
      formData.append('title', title);
      formData.append('content', content);
      formData.append('visibility', visibility);
+     formData.append("date" , yyyyMMdd);
      uploadedFiles.forEach((file) => {
        formData.append('images', file);
      });

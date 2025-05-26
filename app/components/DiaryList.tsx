@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import api from '@/app/api/api';
+import type {Page} from "@/app/types";    
 
 type Diary = {
   diaryId: number;
@@ -41,7 +42,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
     async function fetchDiary() {
       try {
 
-        const res = await api.get(`/diary/${diary.id}`); 
+        const res = await api.get(`/diary/${diary.diaryId}`); 
 
         const data = res.data;
         console.log(data)
@@ -81,7 +82,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
           '/diary/like',
           {
 
-            diaryId: diary.id,
+            diaryId: diary.diaryId,
             liked: nextLiked, 
             
           },
@@ -107,7 +108,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         '/diary/comment',
         {
 
-          diaryId: diary.id,
+          diaryId: diary.diaryId,
 
           comment,
         },
@@ -243,8 +244,8 @@ const RecommendedDiary = ({ diary }: { diary: Diary }) => {
   );
 };
 
-export default function DiaryList(page = 0) {
-  console.log()
+export default function DiaryList({ page = 0 }: { page?: number }) {
+ 
   const [diaries, setDiaries] = useState<Diary[]>([]);
   useEffect(() => {
     const loadDiaries  = async () => {

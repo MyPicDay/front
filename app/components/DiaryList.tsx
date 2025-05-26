@@ -3,8 +3,8 @@
 import {useEffect, useState} from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import api from "@/app/api/api";
-import type {Page} from "@/app/types";
+
+import api from '@/app/api/api';
 
 type Diary = {
   diaryId: number;
@@ -40,7 +40,9 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
     useEffect(() => {
     async function fetchDiary() {
       try {
-        const res = await api.get(`/diary/${diary.diaryId}`); 
+
+        const res = await api.get(`/diary/${diary.id}`); 
+
         const data = res.data;
         console.log(data)
         setLikeCount(data.count);
@@ -50,6 +52,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         setLiked(false);
       }
     }
+
     fetchDiary();
   }, []);
 
@@ -77,8 +80,10 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         const result = await api.post(
           '/diary/like',
           {
-            diaryId: diary.diaryId,
+
+            diaryId: diary.id,
             liked: nextLiked, 
+            
           },
           {
             headers: {
@@ -96,11 +101,14 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
   async function handleCommentSubmit() {
     
     if (!comment.trim()) return;
+
     try {
       const result = await api.post(
         '/diary/comment',
         {
-          diaryId: diary.diaryId,
+
+          diaryId: diary.id,
+
           comment,
         },
         {

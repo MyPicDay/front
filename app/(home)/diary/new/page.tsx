@@ -444,13 +444,12 @@ export default function DiaryNewPage() {
         'Content-Type': 'multipart/form-data',
       },
     });
-
     // 실제 구현에서는 여기서 최종 저장 API를 호출합니다
     alert('일기가 저장되었습니다!');
-    console.log("result: ", result);
-    if (result && result.data) {
-      router.push(`/diary/${result.data}`);
-    }
+    router.push(`/calendar/${result.data.id}`);
+
+    // 실제 구현에서는 여기서 최종 저장 API를 호출합니다
+
   };
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {

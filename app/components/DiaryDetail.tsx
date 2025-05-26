@@ -35,7 +35,7 @@ const PaperAirplaneIcon = ({ className }: { className?: string }) => (
 );
 
 
-interface User { // 임시 User 타입 (실제로는 API 응답에 맞춰야 함)
+interface User { 
  // id: string; 
   name: string;
   avatar: string;

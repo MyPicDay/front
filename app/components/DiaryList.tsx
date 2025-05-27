@@ -5,9 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import api from '@/app/api/api';
-
-import type {Page} from "@/app/types";    
-
+import { Page } from '../types';
 
 type Diary = {
   diaryId: number;

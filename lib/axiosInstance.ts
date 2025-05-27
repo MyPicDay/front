@@ -11,7 +11,7 @@ axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // 클라이언트 사이드에서만 localStorage 접근 및 토큰 추가
     if (typeof window !== 'undefined') {
-      const { accessToken } = useAuthStore.getState(); // Zustand 스토어에서 직접 상태 가져오기
+      const accessToken  = useAuthStore.getState(); // Zustand 스토어에서 직접 상태 가져오기
       if (accessToken) {
         config.headers.Authorization = `Bearer ${accessToken}`;
       }

@@ -252,9 +252,11 @@ const RecommendedDiary = ({ diary }: { diary: Diary }) => {
   );
 };
 
-export default function DiaryList({ page = 0 }: { page?: number }) {
+export default function DiaryList() {
  
   const [diaries, setDiaries] = useState<Diary[]>([]);
+  const [page, setPage] = useState(0);
+
   useEffect(() => {
     const loadDiaries  = async () => {
       try {
@@ -265,6 +267,7 @@ export default function DiaryList({ page = 0 }: { page?: number }) {
           }
         });
         setDiaries(res.data.content);
+        setPage(res.data.number);
       } catch (e) {
         console.error(e);
         setDiaries([]);

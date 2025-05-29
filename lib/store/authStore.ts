@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { getServerURL } from '@/lib/utils/url';
 
 interface UserInfo {
   id: string;
@@ -25,7 +26,8 @@ const useAuthStore = create<AuthState>()(
       user: null,
 
       login: (user) => {
-        set({isLoggedIn: true , user});
+        const avatarUrl = user.avatar && `${getServerURL()}/${user.avatar}`;
+        set({isLoggedIn: true , user: { ...user, avatar: avatarUrl }});
       },
       logout: () => {
         set({ isLoggedIn: false, user:null });

@@ -1,5 +1,6 @@
 import ProfileCalendar from '@/app/components/calendar';
 
+
 export default async function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 

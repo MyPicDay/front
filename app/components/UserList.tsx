@@ -1,7 +1,11 @@
 'use client';
-
+import FollowButton from "./FollowButton";
 import Image from 'next/image';
 import {UserListProps} from "@/app/types";
+
+  // 예시: API 호출로 받아왔다고 가정
+  const isFollowingInitial = true; // 서버에서 받은 값
+
 
 export default function UserList({ users, isLoading } : UserListProps) {
     if (!users || users?.length === 0) {
@@ -32,6 +36,7 @@ export default function UserList({ users, isLoading } : UserListProps) {
                         <button className="border border-orange-400 text-orange-500 px-3 py-1 rounded-md text-sm hover:bg-orange-50">
                             팔로우
                         </button>
+                        <FollowButton userId={user.userId} isFollowingInitial={isFollowingInitial} />
                     </li>
                 ))}
             </ul>

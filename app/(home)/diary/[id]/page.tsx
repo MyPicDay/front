@@ -1,7 +1,9 @@
 import DiaryDetail from '../../../components/DiaryDetail';
+import FollowButton from "../../../components/FollowButton";
+
 
 async function getDiary(id: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_SERVER_URL || process.env.NEXT_PUBLIC_UNIMPLEMENTED_API_SERVER_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_API_SERVER_URL || 'http://localhost:8080';
   // TODO: 구현이 끝나면 경로를 변경해주세요
   // const baseUrl = process.env.NEXT_PUBLIC_API_SERVER_URL;
   const res = await fetch(`${baseUrl}/api/mock/diaries/${id}`, { cache: 'no-store' });

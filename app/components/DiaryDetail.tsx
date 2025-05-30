@@ -107,7 +107,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
   const [likeCount, setLikeCount] = useState(0);
   const [comments, setComments] = useState<Comment[]>([]);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
-  const [viewingReplies, setViewingReplies] = useState<number | null>(null);
+
 
   let timeout: NodeJS.Timeout;
   let respnse : any;
@@ -135,6 +135,67 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
     // 그 외에는 전체 날짜 표시
     return format(d, 'PPP EEE p', { locale: ko });
   } 
+
+
+
+  useEffect(() => {
+  
+    async function fetchDiary() {
+      try {
+        const res = await api.get(`/diary/${diary.id}`); 
+        const data = res.data;
+
+        setLikeCount(data.count);
+        setLiked(data.liked);
+      } catch (error) {
+        setLikeCount(0);
+        setLiked(false);
+      }
+    }
+
+    fetchDiary();
+  }, []); 
+
+  useEffect(() => {
+    async function fetchCommentsAndReplies() {
+      try {
+        const res = await api.get(`/comments/${diary.id}`);
+        const commentData = res.data.comments || [];
+  
+        const formattedComments = commentData.map((comment: Comment) => ({
+          ...comment,
+          name: res.data.name,
+          createdAt: formatDate(new Date(comment.createdAt)),
+          replies: [] as Comment[],
+        }));
+  
+        const replyRes = await api.get(`/replies/${diary.id}`);
+        const replies = replyRes.data.comments || [];
+  
+       
+        replies.forEach((reply: Comment) => {
+          const parent = formattedComments.find((c: Comment) => c.id === reply.parentId);
+          if (parent) {
+            parent.replies.push(reply);
+          }
+        });
+  
+        setComments(formattedComments); 
+  
+      } catch (error) {
+        console.error('댓글/대댓글 가져오기 실패', error);
+      }
+    }
+  
+    fetchCommentsAndReplies();
+  }, []);
+  
+    useEffect(() => {
+      console.log("comments", comments);
+    }, [comments]);
+
+
+
 
    
 
@@ -259,11 +320,14 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
   };
 
   const ReplyComponent = ({ reply }: { reply: Comment }) => (
+ 
     <div className="ml-8 mt-2 flex items-start">
       <div className="w-5 h-5 rounded-full overflow-hidden mr-2 mt-0.5">
         <img
-          src={imageErrors.has(reply.id.toString()) ? '/images/cat-king.png' : (reply.user.avatar || '/images/cat-king.png')}
-          alt={reply.user.name}
+
+          src={imageErrors.has(reply.id.toString()) ? '/images/cat-king.png' : (reply.user?.avatar || '/images/cat-.png')}
+          alt={reply.user?.name}
+
           width={20}
           height={20}
           className="object-cover w-full h-full"
@@ -286,6 +350,17 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
       </div>
     </div>
   );
+
+
+
+
+  useEffect(() => {
+    if (scrollToCommentId) {
+      const element = document.getElementById(`comment-${scrollToCommentId}`);
+      element?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      setScrollToCommentId(null); // 스크롤 후 상태 초기화
+    }
+  }, [scrollToCommentId, comments]); // scrollToCommentId나 comments가 변경될 때 실행
 
 
 
@@ -352,7 +427,9 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
               <div key={comment.id} id={`comment-${comment.id}`} className="text-sm flex items-start">
                 <div className="w-6 h-6 rounded-full overflow-hidden mr-2 mt-0.5">
                   <Image
-                    src={comment.user?.avatar || '/images/cat-king.png'}
+
+                    src={comment.user?.avatar || '/images/default-avatar.png'}
+
                     alt={`${comment.user?.name || '사용자'}의 프로필 이미지`}
                     width={24} 
                     height={24}
@@ -366,26 +443,18 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
                   </div>
                   <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 flex space-x-2">
                     <span>{comment.createdAt}</span>
-                    {comment.replies && comment.replies.length > 0 ? (
-                      <button 
-                        onClick={() => setViewingReplies(viewingReplies === comment.id ? null : comment.id)}
-                        className="font-medium hover:underline"
-                      >
-                        답글 {comment.replies.length}개 {viewingReplies === comment.id ? '숨기기' : '보기'}
-                      </button>
-                    ) : (
                       <button 
                         onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
                         className="font-medium hover:underline"
                       >
                         답글 달기
                       </button>
-                    )}
                   </div>
                   {/* Show replies if they exist and are being viewed */}
-                  {comment.replies && comment.replies.length > 0 && viewingReplies === comment.id && (
+                  {comment.replies && comment.replies.length > 0  && (
                     <div className="mt-2 space-y-2">
                       {comment.replies.map((reply: Comment) => (
+
                         <ReplyComponent key={reply.id} reply={reply} />
                       ))}
                     </div>
@@ -403,7 +472,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
                           />
                         </div>
                         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                          {comment.user.name}님에게 답글 작성 중
+                          {comment.user?.name}님에게 답글 작성 중
                         </span>
                       </div>
                       <form 

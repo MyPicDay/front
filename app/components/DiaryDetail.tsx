@@ -443,24 +443,15 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
                   </div>
                   <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 flex space-x-2">
                     <span>{comment.createdAt}</span>
-                    {comment.replies && comment.replies.length > 0 ? (
-                      <button 
-                        onClick={() => setViewingReplies(viewingReplies === comment.id ? null : comment.id)}
-                        className="font-medium hover:underline"
-                      >
-                        답글 {comment.replies.length}개 {viewingReplies === comment.id ? '숨기기' : '보기'}
-                      </button>
-                    ) : (
                       <button 
                         onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
                         className="font-medium hover:underline"
                       >
                         답글 달기
                       </button>
-                    )}
                   </div>
                   {/* Show replies if they exist and are being viewed */}
-                  {comment.replies && comment.replies.length > 0 && viewingReplies === comment.id && (
+                  {comment.replies && comment.replies.length > 0  && (
                     <div className="mt-2 space-y-2">
                       {comment.replies.map((reply: Comment) => (
 

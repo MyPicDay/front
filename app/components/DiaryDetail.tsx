@@ -9,6 +9,7 @@ import {format, formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 
+
 // 아이콘 (Heroicons 예시 - 실제 프로젝트에서는 라이브러리 설치 또는 SVG 직접 사용)
 const HeartIcon = ({ className, filled }: { className?: string, filled?: boolean }) => (
   <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-7 w-7"} fill={filled ? "red" : "none"} viewBox="0 0 24 24" stroke={filled ? "red": "currentColor"} strokeWidth={2}>
@@ -42,13 +43,13 @@ interface User {
 }
 
 interface Comment {
-
   id: number;
-
   user: User;
+  name: string;
   text: string;
   createdAt: string;
-  replies?: Comment[]; // Add replies array to Comment interface
+  replies: Comment[]; 
+  parentId?: number;
 }
 
 interface CommentResponse {
@@ -73,41 +74,45 @@ interface Diary {
   likes?: number;
   comments?: Comment[];
 }
+// Utility functions for number formatting
 
-// 숫자 포맷 함수 (예: 1000 -> 1천, 10000 -> 1만)
-const formatNumber = (num: number) => {
-  if (num >= 100000000) return (num / 100000000).toFixed(1).replace(/\.0$/, '') + '억';
-  if (num >= 10000) return (num / 10000).toFixed(1).replace(/\.0$/, '') + '만';
-  // 만 단위 미만은 그대로 표시 (또는 쉼표 추가 등)
-  return num.toLocaleString();
-};
+export const formatNumber = (num: number | undefined | null): string => {
+  if (num === undefined || num === null) {
+    return '0';
+  }
+  
+  if (num >= 10000000) {
+    return `${(num / 10000000).toFixed(1)}천만`;
+  } else if (num >= 1000000) {
+    return `${(num / 1000000).toFixed(1)}백만`;
+  } else if (num >= 10000) {
+    return `${(num / 10000).toFixed(1)}만`;
+  } else if (num >= 1000) {
+    return `${(num / 1000).toFixed(1)}천`;
+  }
+  return num.toString();
+}; 
 
-export default function DiaryDetail({ diary }: { diary: Diary }) {
-
+export default function DiaryDetail({ diary }: { diary: Diary }) {  
+  
+  
   // 목업 데이터 및 상태 (실제로는 diary prop에서 받거나, SWR/React Query 등으로 관리)
   const [liked, setLiked] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [visibleCommentCount, setVisibleCommentCount] = useState(3); // 초기에 보여줄 댓글 수
-
   const [scrollToCommentId, setScrollToCommentId] = useState<number | null>(null); // 스크롤 대상 댓글 ID 상태
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState('');
-
-  // diary 객체에 author, likes, comments가 없을 경우를 대비한 기본값 설정
   const author = diary.author || { id: diary.authorId, name: '홍길동', avatar: '/images/city-night.png' };
-  const initialLikes = diary.likes || Math.floor(Math.random() * 2000000) + 100000; // 예: 293.4만 -> 2934000
-  const [likeCount, setLikeCount] = useState(initialLikes);
-  
-  const initialComments: Comment[] = diary.comments || [
-    { id: 0, user: { name: '김철수', avatar: '/images/city-night.png' }, text: '고양이 이쁘네요!', createdAt: '1주' },
-    
+  const [likeCount, setLikeCount] = useState(0);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+  const [viewingReplies, setViewingReplies] = useState<number | null>(null);
 
-  ];
+  let timeout: NodeJS.Timeout;
+  let respnse : any;
 
-
-  
   function formatDate(date: Date) {
-  
     const d = new Date(date);
     const now = new Date();
     
@@ -115,7 +120,6 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
     const kstOffset = 9 * 60 * 60 * 1000; // 9시간을 밀리초로 변환
     const kstNow = new Date(now.getTime() + kstOffset);
     const kstDate = new Date(d.getTime() + kstOffset);
-    
     
     const diff = Math.max(0, (kstNow.getTime() - kstDate.getTime()) / 1000);
     
@@ -132,11 +136,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
     return format(d, 'PPP EEE p', { locale: ko });
   } 
 
-
-
-  const [comments, setComments] = useState<Comment[]>(initialComments);
-  let timeout: NodeJS.Timeout;
-  
+   
 
   const handleLikeToggle = () => {
     const nextLiked = !liked; 
@@ -153,7 +153,6 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
           {
             diaryId: diary.id,
             liked: nextLiked, 
-
           },
           {
             headers: {
@@ -167,7 +166,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
       }
     }, 1000);
   };
-  let respnse : any;
+
   const handleCommentSubmit = async (e: React.FormEvent) => { 
     e.preventDefault();
     if (!newComment.trim()) return;  
@@ -192,10 +191,12 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
         id: respnse.data.id, 
         user: { name: respnse.data.name, avatar: respnse.data.avatar }, 
         text: newComment,
-        createdAt: formatDate(currentTime), // API 응답의 date 대신 현재 시간 사용
+        createdAt: formatDate(currentTime), // API 응답의 date 대신 현재 시간 사용 
+        name: respnse.data.name,
+        replies: [],
       };
       
-      console.log('New comment with current time:', newCommentObj);
+      
       const updatedComments = [...comments, newCommentObj];
       setComments(updatedComments);
       setVisibleCommentCount(updatedComments.length);
@@ -208,13 +209,14 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
 
 
   const handleReplySubmit = async (e: React.FormEvent, parentCommentId: number) => {
+    console.log("parentCommentId", parentCommentId);
     e.preventDefault();
+   
     if (!replyText.trim()) return;
 
     try {
       const reply = await api.post<CommentResponse>(
         '/diary/reply',
-
         {
           diaryId: diary.id,
           parentCommentId: parentCommentId,
@@ -227,19 +229,20 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
         }
       );
       const currentTime = new Date();
+      
       const newReply: Comment = {
         id: reply.data.id,
         user: { name: reply.data.name, avatar: reply.data.avatar },
         text: replyText,
         createdAt: formatDate(currentTime),
-
+        name: reply.data.name,
+        replies: [], // Initialize empty replies array
+        parentId: parentCommentId
       };
 
       // Update comments to include the new reply
       setComments(prev => prev.map(comment => {
-
-        if (comment.id === Number(parentCommentId)) {
-
+        if (comment.id === parentCommentId) {
           return {
             ...comment,
             replies: [...(comment.replies || []), newReply]
@@ -247,7 +250,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
         }
         return comment;
       }));
-
+      
       setReplyText('');
       setReplyingTo(null);
     } catch (error) {
@@ -258,8 +261,8 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
   const ReplyComponent = ({ reply }: { reply: Comment }) => (
     <div className="ml-8 mt-2 flex items-start">
       <div className="w-5 h-5 rounded-full overflow-hidden mr-2 mt-0.5">
-        <Image
-          src={reply.user.avatar || '/images/default-avatar.png'}
+        <img
+          src={imageErrors.has(reply.id.toString()) ? '/images/cat-king.png' : (reply.user.avatar || '/images/cat-king.png')}
           alt={reply.user.name}
           width={20}
           height={20}
@@ -268,7 +271,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
       </div>
       <div className="flex-1">
         <div>
-          <span className="font-semibold mr-1 text-zinc-800 dark:text-zinc-200">{reply.user.name}</span>
+          <span className="font-semibold mr-1 text-zinc-800 dark:text-zinc-200">{reply.user?.name}</span>
           <span className="text-zinc-700 dark:text-zinc-300">{reply.text}</span>
         </div>
         <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 flex space-x-2">
@@ -284,30 +287,6 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
     </div>
   );
 
-  useEffect(() => {
-    async function fetchDiary() {
-      try {
-        const res = await api.get(`/diary/${diary.id}`); 
-        const data = res.data;
-
-        setLikeCount(data.count);
-        setLiked(data.liked);
-      } catch (error) {
-        setLikeCount(0);
-        setLiked(false);
-      }
-    }
-
-    fetchDiary();
-  }, []);
-
-  useEffect(() => {
-    if (scrollToCommentId) {
-      const element = document.getElementById(`comment-${scrollToCommentId}`);
-      element?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      setScrollToCommentId(null); // 스크롤 후 상태 초기화
-    }
-  }, [scrollToCommentId, comments]); // scrollToCommentId나 comments가 변경될 때 실행
 
 
   return (
@@ -373,8 +352,8 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
               <div key={comment.id} id={`comment-${comment.id}`} className="text-sm flex items-start">
                 <div className="w-6 h-6 rounded-full overflow-hidden mr-2 mt-0.5">
                   <Image
-                    src={comment.user.avatar || '/images/default-avatar.png'}
-                    alt={comment.user.name}
+                    src={comment.user?.avatar || '/images/cat-king.png'}
+                    alt={`${comment.user?.name || '사용자'}의 프로필 이미지`}
                     width={24} 
                     height={24}
                     className="object-cover w-full h-full"
@@ -382,24 +361,31 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
                 </div>
                 <div className="flex-1">
                   <div>
-                    <span className="font-semibold mr-1 text-zinc-800 dark:text-zinc-200">{comment.user.name}</span>
+                    <span className="font-semibold mr-1 text-zinc-800 dark:text-zinc-200">{comment.user?.name}</span>
                     <span className="text-zinc-700 dark:text-zinc-300">{comment.text}</span>
                   </div>
                   <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 flex space-x-2">
                     <span>{comment.createdAt}</span>
-                    <button 
-                      onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                      className="font-medium hover:underline"
-                    >
-                      답글 달기
-                    </button>
+                    {comment.replies && comment.replies.length > 0 ? (
+                      <button 
+                        onClick={() => setViewingReplies(viewingReplies === comment.id ? null : comment.id)}
+                        className="font-medium hover:underline"
+                      >
+                        답글 {comment.replies.length}개 {viewingReplies === comment.id ? '숨기기' : '보기'}
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                        className="font-medium hover:underline"
+                      >
+                        답글 달기
+                      </button>
+                    )}
                   </div>
-                  {/* Show replies if they exist */}
-                  {comment.replies && comment.replies.length > 0 && (
+                  {/* Show replies if they exist and are being viewed */}
+                  {comment.replies && comment.replies.length > 0 && viewingReplies === comment.id && (
                     <div className="mt-2 space-y-2">
-
                       {comment.replies.map((reply: Comment) => (
-
                         <ReplyComponent key={reply.id} reply={reply} />
                       ))}
                     </div>

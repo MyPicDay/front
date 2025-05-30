@@ -78,10 +78,6 @@ interface DiaryFormProps {
 const DiaryForm = ({ 
   title, setTitle, content, setContent, visibility, setVisibility, isLoading, onSubmit
 }: DiaryFormProps) => {
-  const handleSubmit = async (e: React.FormEvent) => {
-    
-  }
-
   return (
     <form onSubmit={onSubmit}>
       <div className="mb-4">
@@ -340,22 +336,25 @@ export default function DiaryNewPage() {
   }, [searchParams]);
 
   useEffect(() => { 
-    
-      const fetchDiary = async () => {
-      const res = await api.get(`/diary?date=${yyyyMMdd}`);
-    
-      const {title, content, status, imagesList} = res.data; 
- 
-      setTitle(title);
-      setContent(content);
-      console.log(imagesList)
-      setVisibility(status.toLowerCase() || 'public');
-    
-      setImages(imagesList || []);
-    
+
+    const fetchDiary = async () => {
+      try {
+        const res = await api.get(`/diary?date=${currentDate}`);
+        const {title, content, status, imagesList} = res.data; 
+        setTitle(title || '');
+        setContent(content || '');
+        console.log(imagesList);
+        setVisibility(status.toLowerCase() || 'public');
+        setImages(imagesList || []);
+      } catch (error) {
+        console.error('Failed to fetch diary:', error);
+      }
     }
-    fetchDiary();
-  }, []);
+    if (currentDate) {
+      fetchDiary();
+    }
+  }, [currentDate]);
+
 
   // 모든 이미지 (서버 이미지 + 업로드된 이미지)
   const allImages = [...images, ...uploadPreviews];

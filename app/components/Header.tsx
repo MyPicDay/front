@@ -6,6 +6,7 @@ import {usePathname, useRouter} from 'next/navigation';
 import {useEffect, useRef, useState} from 'react';
 import useAuthStore from '@/lib/store/authStore';
 import api from '../api/api';
+import { getServerURL } from '@/lib/utils/url';
 import SearchInput from '@/app/components/SearchInput';
 
 export default function Header() {
@@ -14,7 +15,8 @@ export default function Header() {
   const [keyword, setKeyword] = useState('');
   const logout = useAuthStore((state) => state.logout);
   // TODO: 로그인 후 유저 아이디 가져오기
-  const userId = 'mock-uuid-user-1'
+  const {user} = useAuthStore((state) => state);
+  const userId = user?.id;
   const { unreadCount, setUnreadCount } = useNotificationStore();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -159,7 +161,7 @@ export default function Header() {
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="w-8 h-8 rounded-full overflow-hidden border-2 border-amber-500 focus:outline-none"
               >
-                <img src="/images/city-night.png" alt="프로필" className="w-full h-full object-cover" />
+                <img src={`${user?.avatar}`} alt="프로필" className="w-full h-full object-cover" />
               </button>
               {isProfileMenuOpen && (
                 <div className="absolute right-0 mt-2 w-30 bg-white rounded-md shadow-lg py-1 z-50 dark:bg-zinc-800">

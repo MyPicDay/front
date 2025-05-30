@@ -3,9 +3,8 @@
 import {useEffect, useState} from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-
 import api from '@/app/api/api';
-import { Page } from '../types';
+import { getServerURL } from '@/lib/utils/url';
 
 type Diary = {
   diaryId: number;
@@ -37,37 +36,40 @@ const formatNumber = (num: number): string => {
 };
 
 const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
-
-    useEffect(() => {
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(diary.likeCount ?? 0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [comment, setComment] = useState('');
+  const [commentCount, setCommentCount] = useState(diary.commentCount ?? 0);
+ 
+  useEffect(() => {
+    console.log("mainImage" , mainImage);
     async function fetchDiary() {
       try {
 
-
-        const res = await api.get(`/diary/${diary.diaryId}`); 
-
+        setIsLoading(true);
+        const res = await api.get(`/diary/${diary.diaryId}`);
 
         const data = res.data;
-        console.log(data)
         setLikeCount(data.count);
         setLiked(data.liked);
+        
       } catch (error) {
-        setLikeCount(0);
+    
+        setLikeCount(diary.likeCount ?? 0);
         setLiked(false);
+      } finally {
+        setIsLoading(false);
       }
     }
 
     fetchDiary();
   }, []);
 
-  const [liked, setLiked] = useState(false);
-  const commentCount = formatNumber(diary.commentCount ?? 0);
   const authorName = diary.author?.username;
   const profileImage = diary.author?.profileImageUrl || "/images/roopy.jpg";
   const hasImage = diary.imageUrls?.[0] && diary.imageUrls?.[0].trim() !== "";
-  const mainImage = hasImage ? `data:image/jpeg;base64,${diary.imageUrls?.[0]}` : "/images/roopy.jpg";
-
-  const [likeCount, setLikeCount] = useState(diary.likeCount ?? 0);
-  const [comment, setComment] = useState('');
+  const mainImage = hasImage ? `${getServerURL()}/diaries/images/${diary.imageUrls?.[0]}` : "/images/roopy.jpg";
 
   // 랜덤 이름 (실제로는 API에서 가져온 데이터 사용)
   let timeout: NodeJS.Timeout;
@@ -83,7 +85,6 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         const result = await api.post(
           '/diary/like',
           {
-
 
             diaryId: diary.diaryId,
 
@@ -104,7 +105,6 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
   }
   
   async function handleCommentSubmit() {
-    
     if (!comment.trim()) return;
 
     try {
@@ -112,9 +112,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         '/diary/comment',
         {
 
-
           diaryId: diary.diaryId,
-
 
           comment,
         },
@@ -126,6 +124,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
       );
       alert("댓글 등록 되었습니다.");
       setComment('');
+      setCommentCount(prev => prev + 1);
     } catch (error) {
       console.error('댓글 전송 실패', error);
     }
@@ -214,9 +213,13 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
         
         {/* 댓글 보기 */}
         <div className="text-zinc-500 dark:text-zinc-400 text-sm">
-          <Link href={`/diary/${diary.diaryId}`}>
-            댓글 {commentCount}개 모두 보기
-          </Link>
+          {commentCount > 0 ? (
+            <Link href={`/diary/${diary.diaryId}`}>
+              댓글 {formatNumber(commentCount)}개 모두 보기
+            </Link>
+          ) : (
+            <span>댓글 0개</span>
+          )}
         </div>
         
         {/* 작성 날짜 */}
@@ -251,23 +254,22 @@ const RecommendedDiary = ({ diary }: { diary: Diary }) => {
 };
 
 export default function DiaryList() {
- 
+
   const [diaries, setDiaries] = useState<Diary[]>([]);
   const [page, setPage] = useState(0);
 
   useEffect(() => {
-    const loadDiaries  = async () => {
+    const loadDiaries = async () => {
       try {
-        const res = await api.get<Page<Diary>>('/diaries', {
-          params: {
-            page: page,
-            sort: 'createdAt,desc'
-          }
-        });
-        setDiaries(res.data.content);
-        setPage(res.data.number);
+
+        const res = await api.get('/diaries');
+        if (res?.data) {
+          setDiaries([...res.data]);
+        } else {
+          setDiaries([]);
+        }
+
       } catch (e) {
-        console.error(e);
         setDiaries([]);
       }
     };
@@ -283,6 +285,7 @@ export default function DiaryList() {
   return (
     <section className="container mx-auto px-4 py-8 max-w-lg">
       {diaries.map((diary) => (
+        
         <DiaryFeedItem key={diary.diaryId} diary={diary} />
       ))}
     </section>

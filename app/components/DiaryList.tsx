@@ -69,8 +69,8 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
   const authorName = diary.username;
   const profileImage = diary.avatar || "/images/roopy.jpg";
   const hasImage = diary.imageUrls?.[0] && diary.imageUrls?.[0].trim() !== "";
-  const mainImage = hasImage ? `data:image/jpeg;base64,${diary.imageUrls?.[0]}` : "/images/roopy.jpg";
-
+  // const mainImage = hasImage ? `data:image/jpeg;base64,${diary.imageUrls?.[0]}` : "/images/roopy.jpg";
+  const mainImage = hasImage ? `${getServerURL()}/diaries/images/${diary.imageUrls?.[0]}` : "/images/roopy.jpg";
 
   // 랜덤 이름 (실제로는 API에서 가져온 데이터 사용)
   let timeout: NodeJS.Timeout;

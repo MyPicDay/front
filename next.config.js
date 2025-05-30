@@ -24,6 +24,12 @@ const nextConfig = {
         port: '8080', 
         pathname: '/**', 
       },
+      {
+        protocol: 'http', // 또는 'https'
+        hostname: 'dev.mypicday.store',
+        port: '8080', // 포트 번호도 정확히 명시
+        pathname: '/**', // 이미지 경로 패턴에 따라 조절 (예: '/이미지경로/**' 또는 필요한 경로)
+      },
     ],
   },
 };

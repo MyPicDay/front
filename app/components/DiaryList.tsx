@@ -11,15 +11,12 @@ type Diary = {
   diaryId: number;
   title: string;
   content: string;
+  username: string;
   createdAt: string;
-  authorId: string;
   imageUrls: string[];
-  author?: {
-    username: string;
-    profileImageUrl: string;
-  };
   likeCount?: number;
   commentCount?: number;
+  avatar: string;
 };
 
 // 요약된 숫자 표시 함수 (예: 1.2만, 293.4만)
@@ -42,9 +39,9 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [comment, setComment] = useState('');
   const [commentCount, setCommentCount] = useState(diary.commentCount ?? 0);
- 
+  console.log("diary", diary);
   useEffect(() => {
-    console.log("mainImage" , mainImage);
+    
     async function fetchDiary() {
       try {
         setIsLoading(true);
@@ -65,8 +62,8 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
     fetchDiary();
   }, []);
 
-  const authorName = diary.author?.username;
-  const profileImage = diary.author?.profileImageUrl || "/images/roopy.jpg";
+  const authorName = diary.username;
+  const profileImage = diary.avatar || "/images/roopy.jpg";
   const hasImage = diary.imageUrls?.[0] && diary.imageUrls?.[0].trim() !== "";
   const mainImage = hasImage ? `data:image/jpeg;base64,${diary.imageUrls?.[0]}` : "/images/roopy.jpg";
 
@@ -146,7 +143,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
           />
         </div>
         <div className="flex-1">
-          <p className="font-semibold text-zinc-900 dark:text-white">{authorName}</p>
+          <p className="font-semibold text-zinc-900 dark:text-white">{diary.username}</p>
         </div>
         <button className="text-zinc-500 dark:text-zinc-400">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -267,6 +264,7 @@ export default function DiaryList() {
     };
     loadDiaries();
   }, []);
+
   if (!diaries || diaries.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">

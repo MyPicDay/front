@@ -1,5 +1,6 @@
 'use client';
 
+import useNotificationStore from '@/lib/store/useNotificationStore';
 import Link from 'next/link';
 import {usePathname, useRouter} from 'next/navigation';
 import {useEffect, useRef, useState} from 'react';
@@ -14,7 +15,7 @@ export default function Header() {
   const logout = useAuthStore((state) => state.logout);
   // TODO: 로그인 후 유저 아이디 가져오기
   const userId = 'mock-uuid-user-1'
-  const [hasNotification, setHasNotification] = useState(false);
+  const { unreadCount, setUnreadCount } = useNotificationStore();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   
@@ -40,20 +41,22 @@ export default function Header() {
   };
 
 
-  // 알림 데이터 가져오기 (mock)
+  // 알림 데이터 가져오기 
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await fetch('/api/mock/notifications');
-        const data = await res.json();
-        // 읽지 않은 알림이 있는지 확인
-        setHasNotification(data.some((notification: any) => !notification.read));
+        const res = await api.get('/notifications/unread');
+        setUnreadCount(res.data.length);
       } catch (error) {
-        console.error('알림 데이터를 가져오는 중 오류 발생:', error);
+        console.error('알림 데이터 가져오기 실패:', error);
       }
     };
 
-    fetchNotifications();
+    fetchNotifications(); // 처음 로딩 시
+
+    const interval = setInterval(fetchNotifications, 30000); // 30초마다 확인
+
+    return () => clearInterval(interval);
   }, []);
 
   // 화면 크기 변경 감지
@@ -145,9 +148,9 @@ export default function Header() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-zinc-700 dark:text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
-              {hasNotification && (
+              {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  1
+                   {unreadCount}
                 </span>
               )}
             </Link>
@@ -199,9 +202,9 @@ export default function Header() {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-zinc-700 dark:text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
-            {hasNotification && (
+            {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                1
+                {unreadCount}
               </span>
             )}
           </Link>

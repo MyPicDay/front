@@ -4,7 +4,8 @@ import {useEffect, useState} from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import api from '@/app/api/api';
-   
+
+import { getServerURL } from '@/lib/utils/url';
 
 
 type Diary = {
@@ -39,6 +40,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [comment, setComment] = useState('');
   const [commentCount, setCommentCount] = useState(diary.commentCount ?? 0);
+
   console.log("diary", diary);
   useEffect(() => {
     
@@ -46,6 +48,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
       try {
         setIsLoading(true);
         const res = await api.get(`/diary/${diary.diaryId}`);
+
         const data = res.data;
         setLikeCount(data.count);
         setLiked(data.liked);
@@ -62,10 +65,12 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
     fetchDiary();
   }, []);
 
+
   const authorName = diary.username;
   const profileImage = diary.avatar || "/images/roopy.jpg";
   const hasImage = diary.imageUrls?.[0] && diary.imageUrls?.[0].trim() !== "";
   const mainImage = hasImage ? `data:image/jpeg;base64,${diary.imageUrls?.[0]}` : "/images/roopy.jpg";
+
 
   // 랜덤 이름 (실제로는 API에서 가져온 데이터 사용)
   let timeout: NodeJS.Timeout;
@@ -107,7 +112,9 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
       const result = await api.post(
         '/diary/comment',
         {
+
           diaryId: diary.diaryId,
+
           comment,
         },
         {
@@ -248,16 +255,21 @@ const RecommendedDiary = ({ diary }: { diary: Diary }) => {
 };
 
 export default function DiaryList() {
+
   const [diaries, setDiaries] = useState<Diary[]>([]);
+  const [page, setPage] = useState(0);
+
   useEffect(() => {
     const loadDiaries = async () => {
       try {
+
         const res = await api.get('/diaries');
         if (res?.data) {
           setDiaries([...res.data]);
         } else {
           setDiaries([]);
         }
+
       } catch (e) {
         setDiaries([]);
       }

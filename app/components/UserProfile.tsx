@@ -16,7 +16,7 @@ interface UserProfileProps {
   userId: string;
 }
 
-export default function UserProfile() {
+export default function UserProfile({userId}: UserProfileProps) {
   const user = useAuthStore((state) => state.user);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);

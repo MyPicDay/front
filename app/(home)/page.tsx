@@ -6,7 +6,7 @@ import useAuthStore from '@/lib/store/authStore';
 
 export default function HomePage() {
   const router = useRouter();
-  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const {isLoggedIn, user} = useAuthStore();
 
   useEffect(() => {
     // authStore에서 isLoggedIn 상태가 true로 설정되면 (즉, 사용자가 로그인한 것으로 확인되면)
@@ -15,7 +15,7 @@ export default function HomePage() {
     // 이 page.tsx는 로그인된 사용자의 / 경로 접근 시 리디렉션만 담당합니다.
     if (isLoggedIn) {
       // TODO: 로그인 후 유저 아이디 가져오기
-      const userId = localStorage.getItem('userId') || 'mock-uuid-user-1'; // 사용자 ID는 임시로 localStorage 또는 기본값 사용
+      const userId = user?.id; // 사용자 ID는 임시로 localStorage 또는 기본값 사용
       router.replace(`/calendar/${userId}`);
     }
     // isLoggedIn이 false인 경우, layout.tsx가 /login으로 리디렉션할 것이므로

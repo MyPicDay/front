@@ -108,6 +108,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
 
+
   let timeout: NodeJS.Timeout;
   let respnse : any;
 
@@ -134,6 +135,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
     // 그 외에는 전체 날짜 표시
     return format(d, 'PPP EEE p', { locale: ko });
   } 
+
 
 
   useEffect(() => {
@@ -191,6 +193,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
     useEffect(() => {
       console.log("comments", comments);
     }, [comments]);
+
 
 
 
@@ -287,6 +290,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
         }
       );
       const currentTime = new Date();
+      
       const newReply: Comment = {
         id: reply.data.id,
         user: { name: reply.data.name, avatar: reply.data.avatar },
@@ -307,7 +311,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
         }
         return comment;
       }));
-
+      
       setReplyText('');
       setReplyingTo(null);
     } catch (error) {
@@ -320,8 +324,10 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
     <div className="ml-8 mt-2 flex items-start">
       <div className="w-5 h-5 rounded-full overflow-hidden mr-2 mt-0.5">
         <img
+
           src={imageErrors.has(reply.id.toString()) ? '/images/cat-king.png' : (reply.user?.avatar || '/images/cat-.png')}
           alt={reply.user?.name}
+
           width={20}
           height={20}
           className="object-cover w-full h-full"
@@ -347,6 +353,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
 
 
 
+
   useEffect(() => {
     if (scrollToCommentId) {
       const element = document.getElementById(`comment-${scrollToCommentId}`);
@@ -354,6 +361,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
       setScrollToCommentId(null); // 스크롤 후 상태 초기화
     }
   }, [scrollToCommentId, comments]); // scrollToCommentId나 comments가 변경될 때 실행
+
 
 
   return (
@@ -419,7 +427,9 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
               <div key={comment.id} id={`comment-${comment.id}`} className="text-sm flex items-start">
                 <div className="w-6 h-6 rounded-full overflow-hidden mr-2 mt-0.5">
                   <Image
+
                     src={comment.user?.avatar || '/images/default-avatar.png'}
+
                     alt={`${comment.user?.name || '사용자'}의 프로필 이미지`}
                     width={24} 
                     height={24}
@@ -433,19 +443,27 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
                   </div>
                   <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 flex space-x-2">
                     <span>{comment.createdAt}</span>
-                    <button 
-                      onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                      className="font-medium hover:underline"
-                    >
-                      답글 달기
-                    </button>
+                    {comment.replies && comment.replies.length > 0 ? (
+                      <button 
+                        onClick={() => setViewingReplies(viewingReplies === comment.id ? null : comment.id)}
+                        className="font-medium hover:underline"
+                      >
+                        답글 {comment.replies.length}개 {viewingReplies === comment.id ? '숨기기' : '보기'}
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                        className="font-medium hover:underline"
+                      >
+                        답글 달기
+                      </button>
+                    )}
                   </div>
-                  {/* Show replies if they exist */}
-                  {comment.replies && comment.replies.length > 0 && (
+                  {/* Show replies if they exist and are being viewed */}
+                  {comment.replies && comment.replies.length > 0 && viewingReplies === comment.id && (
                     <div className="mt-2 space-y-2">
-
                       {comment.replies.map((reply: Comment) => (
-                        
+
                         <ReplyComponent key={reply.id} reply={reply} />
                       ))}
                     </div>

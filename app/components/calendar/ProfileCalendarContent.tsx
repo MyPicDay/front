@@ -7,29 +7,27 @@ import { CalendarOptions } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import CalendarEventStyles from './CalendarEventStyles';
-import { Diary } from '@/app/types/diary';
 import { fetchMonthlyDiaries } from '@/lib/services/apiService';
 import CalendarLoading from './CalendarLoading';
 import CalendarError from './CalendarError';
-// EmptyCalendarMessage는 필요 없어졌으므로 주석 처리 또는 삭제
-// import EmptyCalendarMessage from './EmptyCalendarMessage'; 
+import { CalendarDiary } from '@/app/types/calendar';
 
 interface ProfileCalendarContentProps {
   userId: string;
 }
 
 // 캘린더 이벤트 생성 함수
-function createCalendarEvents(diaries: Diary[]): any[] {
+function createCalendarEvents(diaries: CalendarDiary[]): any[] {
   return diaries.map(diary => ({
-    id: String(diary.id),
+    id: String(diary.diaryId),
     title: diary.title,
-    date: diary.date,
+    date: diary.createdAt.split('T')[0], // ISO 날짜에서 날짜 부분만 추출 (YYYY-MM-DD)
     display: 'background',
     backgroundColor: 'transparent',
     classNames: 'diary-date-cell',
     extendedProps: {
-      image: diary.image,
-      diaryId: diary.id
+      image: diary.imageUrls.length > 0 ? diary.imageUrls[0] : null,
+      diaryId: diary.diaryId
     }
   }));
 }
@@ -39,7 +37,7 @@ export default function ProfileCalendarContent({ userId }: ProfileCalendarConten
   
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [diaries, setDiaries] = useState<Diary[]>([]);
+  const [diaries, setDiaries] = useState<CalendarDiary[]>([]);
   const [currentVisibleMonth, setCurrentVisibleMonth] = useState<Date>(() => new Date(2025, 4, 1));
 
   const calendarRef = React.useRef<FullCalendar>(null);
@@ -52,7 +50,6 @@ export default function ProfileCalendarContent({ userId }: ProfileCalendarConten
     try {
       const year = date.getFullYear();
       const month = date.getMonth() + 1;
-      console.log(`[PCC] Fetching for User: ${userId}, Year: ${year}, Month: ${month}`);
       const fetchedDiaries = await fetchMonthlyDiaries(userId, year, month);
       setDiaries(fetchedDiaries);
     } catch (err) {
@@ -78,7 +75,11 @@ export default function ProfileCalendarContent({ userId }: ProfileCalendarConten
   }, []);
 
   const calendarEvents = createCalendarEvents(diaries);
-  const formattedDiaryDates = diaries.map(d => ({ date: d.date, id: d.id, image: d.image }));
+  const formattedDiaryDates = diaries.map(d => ({ 
+    date: d.createdAt.split('T')[0], // ISO 날짜에서 날짜 부분만 추출
+    id: d.diaryId, 
+    image: d.imageUrls.length > 0 ? d.imageUrls[0] : null 
+  }));
 
   const handleDatesSet = (dateInfo: any) => {
     console.log('[PCC] datesSet event. New view start date:', dateInfo.view.currentStart);
@@ -121,7 +122,7 @@ export default function ProfileCalendarContent({ userId }: ProfileCalendarConten
     }
   };
 
-  // FullCalendar 옵션 설정 (기존과 대부분 동일)
+  // FullCalendar 옵션 설정
   const calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin],
     initialView: "dayGridMonth",
@@ -146,7 +147,7 @@ export default function ProfileCalendarContent({ userId }: ProfileCalendarConten
     eventContent: () => null,
     datesSet: handleDatesSet,
     eventClick: handleEventClick,
-    dateClick: handleDateClick, // 수정된 핸들러 연결
+    dateClick: handleDateClick,
 
     customButtons: {
       prev: { text: '<', click: () => calendarRef.current?.getApi().prev() },
@@ -161,17 +162,14 @@ export default function ProfileCalendarContent({ userId }: ProfileCalendarConten
         <CalendarError />
       ) : isLoading ? (
         <CalendarLoading />
-      // EmptyCalendarMessage 또는 EmptyCalendar는 이전 요청에 따라 삭제되었으므로, 
-      // 일기가 없는 경우 FullCalendar가 빈 상태로 표시되거나, CSS로 별도 스타일링 필요
-      ) : null } {/* 로딩이 아닐 때는 항상 FullCalendar를 표시 (내용이 없더라도) */}
+      ) : null}
 
-
-      {/* FullCalendar는 에러가 아닐 때 항상 렌더링 (로딩 중이거나, 데이터가 없어도 뼈대는 나옴) */}
+      {/* FullCalendar는 에러가 아닐 때 항상 렌더링 */}
       {!error && (
-          <FullCalendar
-            ref={calendarRef}
-            {...calendarOptions}
-          />
+        <FullCalendar
+          ref={calendarRef}
+          {...calendarOptions}
+        />
       )}
       
       {/* 로딩 중이 아니고, 에러도 없고, 일기 데이터가 있을 때만 스타일 적용 */}
@@ -179,7 +177,7 @@ export default function ProfileCalendarContent({ userId }: ProfileCalendarConten
         <CalendarEventStyles diaries={diaries} />
       )}
 
-      {/* 로딩 중이 아니고, 에러도 없고, 일기가 없을 때 "작성된 일기 없음" 메시지 (캘린더와 별개로 표시) */}
+      {/* 로딩 중이 아니고, 에러도 없고, 일기가 없을 때 메시지 표시 */}
       {!isLoading && !error && diaries.length === 0 && (
         <div className="text-center text-gray-500 dark:text-gray-400 py-4">
           작성된 일기가 없습니다. 빈 날짜를 클릭하여 새 일기를 작성할 수 있습니다.

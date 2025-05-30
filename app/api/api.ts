@@ -1,9 +1,10 @@
 import axios from 'axios';
 import useAuthStore from '@/lib/store/authStore';
 import router from 'next/router';
+import { getServerURL } from '@/lib/utils/url';
 
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_SERVER_URL   || 'http://localhost:8080/api',
+    baseURL: getServerURL(),
 });
 
 api.interceptors.request.use((config) => {
@@ -32,7 +33,7 @@ api.interceptors.response.use(
 
             try {
                 const res = await axios.post(
-                    `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/reissue`,
+                    `${getServerURL()}/auth/reissue`,
                     {},
                     {
                         headers: {
@@ -54,7 +55,7 @@ api.interceptors.response.use(
                 console.warn('❌ 토큰 재발급 실패: 자동 로그아웃');
                 try {
                     await axios.post(
-                        `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/logout`,
+                        `${getServerURL()}/auth/logout`,
                         {},
                         {
                             headers: {

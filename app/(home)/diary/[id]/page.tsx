@@ -9,12 +9,16 @@ async function getDiary(id: string) {
     // This will activate the closest `error.js` Error Boundary
     throw new Error('Failed to fetch diary');
   }
+  
   return res.json();
 }
 
 export default async function DiaryDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+
   const diary = await getDiary(id);
+  console.log("diary", diary);
   
   if (!diary || diary.message) { // Check for not found message
     return (
@@ -23,6 +27,5 @@ export default async function DiaryDetailPage({ params }: { params: Promise<{ id
       </main>
     );
   }
-
   return <DiaryDetail diary={diary} />;
 } 

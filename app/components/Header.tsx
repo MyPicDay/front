@@ -5,6 +5,8 @@ import {usePathname, useRouter} from 'next/navigation';
 import {useEffect, useRef, useState} from 'react';
 import useAuthStore from '@/lib/store/authStore';
 import api from '../api/api';
+import { getServerURL } from '@/lib/utils/url';
+import SearchInput from '@/app/components/SearchInput';
 
 export default function Header() {
   const pathname = usePathname();
@@ -12,7 +14,8 @@ export default function Header() {
   const [keyword, setKeyword] = useState('');
   const logout = useAuthStore((state) => state.logout);
   // TODO: 로그인 후 유저 아이디 가져오기
-  const userId = 'mock-uuid-user-1'
+  const {user} = useAuthStore((state) => state);
+  const userId = user?.id;
   const [hasNotification, setHasNotification] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -96,27 +99,13 @@ export default function Header() {
           </Link>
           
           {/* 검색창 */}
-          <div className="relative w-72">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
-              type="search"
-              placeholder="검색"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="pl-10 pr-4 py-2 w-full rounded-full bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
+          <SearchInput />
           
           {/* 네비게이션 링크 */}
           <nav className="flex items-center gap-6">
             <Link 
               href={`/calendar/${userId}`} 
-              className={`flex items-center gap-1 font-medium ${pathname.startsWith('/calendar') ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300'}`}
+              className={`flex items-center gap-1 font-medium ${pathname.startsWith('/calendar') ? 'text-[#936239] dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -125,7 +114,7 @@ export default function Header() {
             </Link>
             <Link 
               href="/diary" 
-              className={`flex items-center gap-1 font-medium ${pathname === '/diary' ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300'}`}
+              className={`flex items-center gap-1 font-medium ${pathname === '/diary' ? 'text-[#936239] dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -134,7 +123,7 @@ export default function Header() {
             </Link>
             <Link 
               href="/diary/new" 
-              className={`flex items-center gap-1 font-medium ${pathname === '/diary/new' ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300'}`}
+              className={`flex items-center gap-1 font-medium ${pathname === '/diary/new' ? 'text-[#936239] dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -143,7 +132,7 @@ export default function Header() {
             </Link>
             <Link 
               href={`/profile/${userId}`} 
-              className={`flex items-center gap-1 font-medium ${pathname.startsWith('/profile') ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300'}`}
+              className={`flex items-center gap-1 font-medium ${pathname.startsWith('/profile') ? 'text-[#936239] dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -169,7 +158,7 @@ export default function Header() {
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="w-8 h-8 rounded-full overflow-hidden border-2 border-amber-500 focus:outline-none"
               >
-                <img src="/images/city-night.png" alt="프로필" className="w-full h-full object-cover" />
+                <img src={`${user?.avatar}`} alt="프로필" className="w-full h-full object-cover" />
               </button>
               {isProfileMenuOpen && (
                 <div className="absolute right-0 mt-2 w-30 bg-white rounded-md shadow-lg py-1 z-50 dark:bg-zinc-800">

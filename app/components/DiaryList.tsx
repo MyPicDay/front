@@ -4,7 +4,6 @@ import {useEffect, useState} from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import api from '@/app/api/api';
-   
 
 
 type Diary = {
@@ -47,8 +46,10 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
     console.log("mainImage" , mainImage);
     async function fetchDiary() {
       try {
+
         setIsLoading(true);
         const res = await api.get(`/diary/${diary.diaryId}`);
+
         const data = res.data;
         setLikeCount(data.count);
         setLiked(data.liked);
@@ -110,7 +111,9 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
       const result = await api.post(
         '/diary/comment',
         {
+
           diaryId: diary.diaryId,
+
           comment,
         },
         {
@@ -251,16 +254,21 @@ const RecommendedDiary = ({ diary }: { diary: Diary }) => {
 };
 
 export default function DiaryList() {
+
   const [diaries, setDiaries] = useState<Diary[]>([]);
+  const [page, setPage] = useState(0);
+
   useEffect(() => {
     const loadDiaries = async () => {
       try {
+
         const res = await api.get('/diaries');
         if (res?.data) {
           setDiaries([...res.data]);
         } else {
           setDiaries([]);
         }
+
       } catch (e) {
         setDiaries([]);
       }

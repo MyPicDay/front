@@ -336,6 +336,7 @@ export default function DiaryNewPage() {
   }, [searchParams]);
 
   useEffect(() => { 
+
     const fetchDiary = async () => {
       try {
         const res = await api.get(`/diary?date=${currentDate}`);
@@ -353,6 +354,7 @@ export default function DiaryNewPage() {
       fetchDiary();
     }
   }, [currentDate]);
+
 
   // 모든 이미지 (서버 이미지 + 업로드된 이미지)
   const allImages = [...images, ...uploadPreviews];

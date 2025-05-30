@@ -1,28 +1,26 @@
 'use client';
 
-// 인라인으로 타입 정의
-interface Diary {
-  id: number;
-  title: string;
-  content: string;
-  date: string;
-  authorId: string;
-  image: string;
-}
+import { getServerURL } from "@/lib/utils/url";
+import { CalendarDiary } from "@/app/types/calendar";
 
 interface CalendarEventStylesProps {
-  diaries: Diary[];
+  diaries: CalendarDiary[];
 }
 
 export default function CalendarEventStyles({ diaries }: CalendarEventStylesProps) {
-  console.log("diaries: ", diaries)
+  const diariesWithServerImage = diaries.map(diary => ({
+    ...diary,
+    image: diary.imageUrls.length > 0 ? `${getServerURL()}/diaries/images/${diary.imageUrls[0]}` : '',
+    date: diary.createdAt.split('T')[0] // 날짜 형식 통일
+  }));
+  
   return (
     <style jsx global>{`
       .fc-day[data-date] {
         position: relative;
         overflow: hidden;
       }
-      ${diaries.map(diary => `
+      ${diariesWithServerImage.map(diary => `
         .fc-day[data-date="${diary.date}"] {
           background-image: url('${diary.image}');
           background-size: contain;

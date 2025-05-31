@@ -1,16 +1,22 @@
-'use client'; // 인터랙티브 요소(좋아요, 댓글 입력 등)를 위해 클라이언트 컴포넌트로 전환
+'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image'; // Next.js Image 컴포넌트 사용
+import Image from 'next/image';
 import api from '@/app/api/api';
 
 import {format, formatDistanceToNow } from 'date-fns';
 
 import { ko } from 'date-fns/locale';
 
+// Import Swiper React components
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
 
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
-// 아이콘 (Heroicons 예시 - 실제 프로젝트에서는 라이브러리 설치 또는 SVG 직접 사용)
 const HeartIcon = ({ className, filled }: { className?: string, filled?: boolean }) => (
   <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-7 w-7"} fill={filled ? "red" : "none"} viewBox="0 0 24 24" stroke={filled ? "red": "currentColor"} strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -37,10 +43,18 @@ const PaperAirplaneIcon = ({ className }: { className?: string }) => (
 
 
 interface User { 
- // id: string; 
+//  id: string; 
   name: string;
   avatar: string;
 }
+
+
+interface UserInfo { 
+    id: string; 
+    name: string;
+    avatar: string;
+  }
+  
 
 interface Comment {
   id: number;
@@ -53,7 +67,6 @@ interface Comment {
 }
 
 interface CommentResponse {
-
   id: number;
   name: string;
   avatar: string;
@@ -67,10 +80,8 @@ interface Diary {
   title: string; // 일기 내용으로 사용
   content: string; // 상세 페이지에서는 content가 메인 텍스트가 될 수 있음
   date: string;
-  authorId: string;
-  image: string;
-  // 목업 데이터 추가 (실제 API 응답에 따라 변경)
-  author?: User;
+  imageUrls: string[];
+  author?: UserInfo;
   likes?: number;
   comments?: Comment[];
 }
@@ -93,21 +104,21 @@ export const formatNumber = (num: number | undefined | null): string => {
   return num.toString();
 }; 
 
-export default function DiaryDetail({ diary }: { diary: Diary }) {  
-  
-  
-  // 목업 데이터 및 상태 (실제로는 diary prop에서 받거나, SWR/React Query 등으로 관리)
+export default function DiaryDetail({ diaryId }: { diaryId: string }) {  
+
+
+
+  const [diary, setDiary] = useState<Diary | null>(null);
   const [liked, setLiked] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [visibleCommentCount, setVisibleCommentCount] = useState(3); // 초기에 보여줄 댓글 수
   const [scrollToCommentId, setScrollToCommentId] = useState<number | null>(null); // 스크롤 대상 댓글 ID 상태
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState('');
-  const author = diary.author || { id: diary.authorId, name: '홍길동', avatar: '/images/city-night.png' };
+  const { author }  = diary  || { id: "dummy", name: '홍길동', avatar: '/images/city-night.png' };
   const [likeCount, setLikeCount] = useState(0);
   const [comments, setComments] = useState<Comment[]>([]);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
-
 
   let timeout: NodeJS.Timeout;
   let respnse : any;
@@ -136,63 +147,77 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
     return format(d, 'PPP EEE p', { locale: ko });
   } 
 
-
-
   useEffect(() => {
-  
     async function fetchDiary() {
       try {
-        const res = await api.get(`/diary/${diary.id}`); 
+        const res = await api.get(`/diaries/${diaryId}`);
         const data = res.data;
-
-        setLikeCount(data.count);
-        setLiked(data.liked);
+        setDiary(data);
+        console.log("diary", data);
       } catch (error) {
-        setLikeCount(0);
-        setLiked(false);
+        console.error('일기 가져오기 실패', error);
       }
     }
-
     fetchDiary();
-  }, []); 
+  }, [diaryId]);
 
-  useEffect(() => {
-    async function fetchCommentsAndReplies() {
-      try {
-        const res = await api.get(`/comments/${diary.id}`);
-        const commentData = res.data.comments || [];
+
+  // useEffect(() => {
   
-        const formattedComments = commentData.map((comment: Comment) => ({
-          ...comment,
-          name: res.data.name,
-          createdAt: formatDate(new Date(comment.createdAt)),
-          replies: [] as Comment[],
-        }));
+  //   async function fetchDiary() {
+  //     try {
+  //       const res = await api.get(`/diary/${diary?.id}`); 
+  //       const data = res.data;
+
+  //       setLikeCount(data.count);
+  //       setLiked(data.liked);
+  //     } catch (error) {
+  //       setLikeCount(0);
+  //       setLiked(false);
+  //     }
+  //   }
+
+  //   fetchDiary();
+  // }, []); 
+
+  // useEffect(() => {
+  //   async function fetchCommentsAndReplies() {
+  //     try {
+  //       const res = await api.get(`/comments/${diary?.id}`);
+  //       const commentData = res.data.comments || [];
   
-        const replyRes = await api.get(`/replies/${diary.id}`);
-        const replies = replyRes.data.comments || [];
+  //       const formattedComments = commentData.map((comment: Comment) => ({
+  //         ...comment,
+  //         user: { name: comment.user?.name || res.data.name, avatar: comment.user?.avatar || res.data.avatar },
+  //         name: comment.user?.name || res.data.name,
+  //         createdAt: formatDate(new Date(comment.createdAt)),
+  //         replies: [] as Comment[],
+  //       }));
+  
+  //       const replyRes = await api.get(`/replies/${diary?.id}`);
+  //       const replies = replyRes.data.comments || [];
   
        
-        replies.forEach((reply: Comment) => {
-          const parent = formattedComments.find((c: Comment) => c.id === reply.parentId);
-          if (parent) {
-            parent.replies.push(reply);
-          }
-        });
+  //       replies.forEach((reply: Comment) => {
+  //         const parent = formattedComments.find((c: Comment) => c.id === reply.parentId);
+  //         if (parent) {
+  //           parent.replies.push(reply);
+  //         }
+  //       });
   
-        setComments(formattedComments); 
+  //       setComments(formattedComments); 
   
-      } catch (error) {
-        console.error('댓글/대댓글 가져오기 실패', error);
-      }
-    }
+  //     } catch (error) {
+  //       console.error('댓글/대댓글 가져오기 실패', error);
+  //     }
+  //   }
   
-    fetchCommentsAndReplies();
-  }, []);
+  //   fetchCommentsAndReplies();
+  // }, [diary]);
   
-    useEffect(() => {
-      console.log("comments", comments);
-    }, [comments]);
+  //   useEffect(() => {
+  //     console.log("comments", comments);
+  //   }, [comments]);
 
 
 
@@ -212,7 +237,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
         const result = await api.post(
           '/diary/like',
           {
-            diaryId: diary.id,
+            diaryId: diary?.id,
             liked: nextLiked, 
           },
           {
@@ -236,7 +261,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
        respnse = await api.post(
         '/diary/comment',
         {
-          diaryId: diary.id,
+          diaryId: diary?.id,
           comment: newComment,
         },
         {
@@ -279,7 +304,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
       const reply = await api.post<CommentResponse>(
         '/diary/reply',
         {
-          diaryId: diary.id,
+          diaryId: diary?.id,
           parentCommentId: parentCommentId,
           comment: replyText,
         },
@@ -325,12 +350,17 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
       <div className="w-5 h-5 rounded-full overflow-hidden mr-2 mt-0.5">
         <img
 
-          src={imageErrors.has(reply.id.toString()) ? '/images/cat-king.png' : (reply.user?.avatar || '/images/cat-.png')}
-          alt={reply.user?.name}
+          src={imageErrors.has(reply.id.toString()) ? '/images/cat-king.png' : (reply.user?.avatar || '/images/cat-king.png')}
+          alt={reply.user?.name || '사용자'}
 
           width={20}
           height={20}
           className="object-cover w-full h-full"
+          onError={() => {
+            const newErrors = new Set(imageErrors);
+            newErrors.add(reply.id.toString());
+            setImageErrors(newErrors);
+          }}
         />
       </div>
       <div className="flex-1">
@@ -372,28 +402,49 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
         <div>
           {/* 작성자 정보 */}
           <div className="flex items-center p-3 border-b border-zinc-200 dark:border-zinc-700">
-            { <Image
-              src={author.avatar}
-              alt={author.name}
+            { 
+              author?.avatar && (
+              <Image
+              src={author?.avatar}
+              alt={author?.name || '작성자 아바타'}
               width={32}
               height={32}
               className="rounded-full object-cover mr-3"
-            /> }
-            <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">{author.name}</span>
+            /> )
+            }
+            <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">{author?.name}</span>
             <button className="ml-auto text-zinc-500 dark:text-zinc-400">
               <DotsHorizontalIcon />
             </button>
           </div>
 
-          {/* 이미지 */}
-          <div className="w-full aspect-square relative"> {/* 이미지 비율 1:1 */}
-            <Image
-              src={diary.image}
-              alt={diary.title || "일기 이미지"}
-              layout="fill" // 부모 요소에 꽉 채우기
-              objectFit="cover" // 이미지를 비율 유지하며 꽉 채움
-              priority // 중요 이미지 우선 로드
-            />
+          {/* 이미지 슬라이더 */}
+          <div className="w-full aspect-square relative">
+            {diary?.imageUrls && diary.imageUrls.length > 0 ? (
+              <Swiper
+                modules={[Pagination]}
+                spaceBetween={0}
+                slidesPerView={1}
+                pagination={{ clickable: true }}
+                className="h-full w-full" // Swiper가 부모 크기를 채우도록 설정
+              >
+                {diary.imageUrls.map((imgSrc, index) => (
+                  <SwiperSlide key={index}>
+                    <Image
+                      src={imgSrc}
+                      alt={`${diary?.title || "일기 이미지"} ${index + 1}`}
+                      layout="fill"
+                      objectFit="cover"
+                      priority={index === 0} // 첫 번째 이미지만 우선 로드
+                    />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            ) : (
+              <div className="w-full h-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center">
+                <span className="text-zinc-500">이미지 없음</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -416,8 +467,8 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
 
             {/* 일기 내용 (본문) */}
             <div className="text-sm text-zinc-800 dark:text-zinc-200 mb-2">
-              <span className="font-semibold mr-1">{author.name}</span>
-              {diary.title}
+              <span className="font-semibold mr-1">{author?.name}</span>
+              {diary?.title}
             </div>
           </div>
           
@@ -427,13 +478,16 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
               <div key={comment.id} id={`comment-${comment.id}`} className="text-sm flex items-start">
                 <div className="w-6 h-6 rounded-full overflow-hidden mr-2 mt-0.5">
                   <Image
-
-                    src={comment.user?.avatar || '/images/default-avatar.png'}
-
+                    src={imageErrors.has(comment.id.toString()) ? '/images/default-avatar.png' : (comment.user?.avatar || '/images/default-avatar.png')}
                     alt={`${comment.user?.name || '사용자'}의 프로필 이미지`}
-                    width={24} 
+                    width={24}
                     height={24}
                     className="object-cover w-full h-full"
+                    onError={() => {
+                        const newErrors = new Set(imageErrors);
+                        newErrors.add(comment.id.toString());
+                        setImageErrors(newErrors);
+                    }}
                   />
                 </div>
                 <div className="flex-1">
@@ -464,7 +518,7 @@ export default function DiaryDetail({ diary }: { diary: Diary }) {
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-5 h-5 rounded-full overflow-hidden">
                           <Image
-                            src="/images/cat-king.png"
+                            src={author?.avatar || "/images/cat-king.png"} // 현재 사용자 아바타 (임시)
                             alt="Current user"
                             width={20}
                             height={20}

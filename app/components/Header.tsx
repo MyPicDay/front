@@ -26,11 +26,14 @@ export default function Header() {
 
   const handleLogout = async () => {
   try {
-    await api.post('/auth/logout', {}, { withCredentials: true }); // refreshToken 쿠키 삭제
-    logout(); // Zustand 상태 초기화
-    router.push('/login'); // 로그아웃 후 이동
+    await api.post('/auth/logout', {}, { withCredentials: true });
+    // logout(); // Zustand 상태 초기화
+    // router.push('/login'); // 로그아웃 후 이동
   } catch (error) {
     console.error('로그아웃 실패:', error);
+  } finally {
+    logout(); 
+    router.push('/login'); 
   }
 };
 

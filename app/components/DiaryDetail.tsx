@@ -51,7 +51,7 @@ interface User {
 
 interface UserInfo { 
     id: string; 
-    name: string;
+    nickname: string;
     avatar: string;
   }
   
@@ -153,7 +153,6 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
         const res = await api.get(`/diaries/${diaryId}`);
         const data = res.data;
         setDiary(data);
-        console.log("diary", data);
       } catch (error) {
         console.error('일기 가져오기 실패', error);
       }
@@ -401,18 +400,18 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
         {/* 상단 고정 영역: 작성자 정보 및 이미지 */}
         <div>
           {/* 작성자 정보 */}
-          <div className="flex items-center p-3 border-b border-zinc-200 dark:border-zinc-700">
+          <div className="flex items-center p-3 border-b border-zinc-200 dark:border-zinc-700 bg-[#FEF4E4]">
             { 
               author?.avatar && (
               <Image
               src={author?.avatar}
-              alt={author?.name || '작성자 아바타'}
-              width={32}
-              height={32}
+              alt={author?.nickname || '작성자 아바타'}
+              width={40}
+              height={40}
               className="rounded-full object-cover mr-3"
             /> )
             }
-            <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">{author?.name}</span>
+            <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">{author?.nickname}</p>
             <button className="ml-auto text-zinc-500 dark:text-zinc-400">
               <DotsHorizontalIcon />
             </button>
@@ -467,7 +466,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
 
             {/* 일기 내용 (본문) */}
             <div className="text-sm text-zinc-800 dark:text-zinc-200 mb-2">
-              <span className="font-semibold mr-1">{author?.name}</span>
+              <span className="font-semibold mr-1">{author?.nickname}</span>
               {diary?.title}
             </div>
           </div>

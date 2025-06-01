@@ -22,6 +22,7 @@ export default function HomeLayout({
 
   useEffect(() => {
     // 컴포넌트가 클라이언트에 마운트되었음을 표시합니다.
+    console.log("HomeLayout useEffect");
     setIsClient(true);
   }, []);
 

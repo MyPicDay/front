@@ -1,9 +1,12 @@
-// const withPWA = require('next-pwa')({
-//   dest: 'public',
-//   register: true,
-//   skipWaiting: true,
-//   disable: process.env.NODE_ENV === 'development'
-// });
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  // disable: process.env.NODE_ENV === 'development',
+  disable: false,
+  // FCM 전용 서비스워커 사용
+  swSrc: 'public/firebase-messaging-sw.js',
+  buildExcludes: [/middleware-manifest\.json$/], // Next 15 오류 회피
+});
+
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -34,5 +37,4 @@ const nextConfig = {
   },
 };
 
-// module.exports = withPWA(nextConfig); 
-module.exports = nextConfig; 
+module.exports = withPWA(nextConfig); 

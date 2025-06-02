@@ -67,7 +67,7 @@ interface Comment {
 }
 
 interface CommentResponse {
-  commentId: number;
+  id: number;
   name: string;
   avatar: string;
   date: string;
@@ -154,7 +154,9 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
         const data = res.data; 
         let {comments } = data ; 
         let commentList: Comment[] = []; 
+
         let replyList: Comment[] = []; 
+
         comments.forEach((comment: Comment) => {
           
           if(comment.parentCommentId === null) {
@@ -166,7 +168,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
         });
         commentList.forEach((comment: Comment) => {
           let result = replyList.filter((reply: Comment) => reply.parentCommentId === comment.commentId);
-          console.log("result", result);
+
           comment.replies = [ ...(comment.replies || []), ...result];
         });
         ;
@@ -192,41 +194,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
     }
   }, [scrollToCommentId, comments]); // scrollToCommentId나 comments가 변경될 때 실행
 
-  //  useEffect(() => {
-  //   async function fetchCommentsAndReplies() {
-  //      try {
-  //       const res = await api.get(`/comments/${diaryId}`);
-  //       const commentData = res.data.comments || [];
-  //       console.log("commentData", commentData);
-  
-  //       const formattedComments = commentData.map((comment: Comment) => ({
-  //          ...comment,
-  //         user: { name: comment.user?.name || res.data.name, avatar: comment.user?.avatar || res.data.avatar },
-  //          name: comment.user?.name || res.data.name,
-  //         createdAt: formatDate(new Date(comment.createdAt)),
-  //          replies: [] as Comment[],
-  //        }));
-  
-  //       const replyRes = await api.get(`/replies/${diaryId}`);
-  //        const replies = replyRes.data.comments || [];
-  
-       
-  //        replies.forEach((reply: Comment) => {
-  //           const parent = formattedComments.find((c: Comment) => c.commentId === reply.parentCommentId);
-  //         if (parent) {
-  //           parent.replies.push(reply);
-  //          }
-  //        });
-  
-  //       setComments(formattedComments); 
-  
-  //      } catch (error) {
-  //        console.error('댓글/대댓글 가져오기 실패', error);
-  //      }
-  //    }
-  
-  //    fetchCommentsAndReplies();
-  //  }, [diary]);
+
   
   const handleLikeToggle = () => {
     const nextLiked = !liked; 
@@ -274,14 +242,13 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
           },
         } 
       );
+
       
-      // 현재 시간을 사용하여 댓글 생성 시간 설정
-      const currentTime = new Date();
       const newCommentObj: Comment = {
         commentId: respnse.data.id, 
         user: { name: respnse.data.name, avatar: respnse.data.avatar }, 
         text: newComment,
-        createdAt: formatDate(currentTime), // API 응답의 date 대신 현재 시간 사용 
+        createdAt: respnse.data.date, 
         name: respnse.data.name,
         replies: [],
       };
@@ -299,7 +266,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
 
 
   const handleReplySubmit = async (e: React.FormEvent, parentCommentId: number) => {
-    console.log("parentCommentId", parentCommentId);
+    
     e.preventDefault();
    
     if (!replyText.trim()) return;
@@ -319,13 +286,15 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
         }
       );
      
-      const currentTime = new Date();
+      console.log("reply.data" , reply.data)
       
       const newReply: Comment = {
-        commentId: reply.data.commentId,
+
+        commentId: reply.data.id ,
+
         user: { name: reply.data.name, avatar: reply.data.avatar },
         text: replyText,
-        createdAt: formatDate(currentTime),
+        createdAt: reply.data.date,
         name: reply.data.name,
         replies: [], // Initialize empty replies array
         parentCommentId: parentCommentId
@@ -353,7 +322,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
  
     <div className="ml-8 mt-2 flex items-start">
       <div className="w-5 h-5 rounded-full overflow-hidden mr-2 mt-0.5">
-        <img
+        {/* <img
 
           src={imageErrors.has(reply.commentId.toString()) ? '/images/cat-king.png' : (reply.user?.avatar || '/images/cat-king.png')}
           alt={reply.user?.name || '사용자'}
@@ -365,7 +334,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
             newErrors.add(reply.commentId.toString());
             setImageErrors(newErrors);
           }}
-        />
+        /> */}
       </div>
       <div className="flex-1">
         <div>

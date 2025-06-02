@@ -67,7 +67,7 @@ interface Comment {
 }
 
 interface CommentResponse {
-  id: number;
+  commentId: number;
   name: string;
   avatar: string;
   date: string;
@@ -154,8 +154,9 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
         const data = res.data; 
         let {comments } = data ; 
         let commentList: Comment[] = []; 
-        let replyList: Comment[] = [];  
-        console.log(data); 
+
+        let replyList: Comment[] = []; 
+
         comments.forEach((comment: Comment) => {
           
           if(comment.parentCommentId === null) {
@@ -167,6 +168,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
         });
         commentList.forEach((comment: Comment) => {
           let result = replyList.filter((reply: Comment) => reply.parentCommentId === comment.commentId);
+
           comment.replies = [ ...(comment.replies || []), ...result];
         });
         ;
@@ -322,7 +324,9 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
       console.log("reply.data" , reply.data)
       
       const newReply: Comment = {
+
         commentId: reply.data.id ,
+
         user: { name: reply.data.name, avatar: reply.data.avatar },
         text: replyText,
         createdAt: reply.data.date,

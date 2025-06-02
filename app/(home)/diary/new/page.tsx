@@ -341,10 +341,11 @@ export default function DiaryNewPage() {
       try {
         const res = await api.get(`/diary?date=${currentDate}`);
         const {title, content, status, imagesList} = res.data; 
+        console.log("res.data", res);
         setTitle(title || '');
         setContent(content || '');
         console.log(imagesList);
-        setVisibility(status.toLowerCase() || 'public');
+        setVisibility(status?.toLowerCase() || 'public');
         setImages(imagesList || []);
       } catch (error) {
         console.error('Failed to fetch diary:', error);

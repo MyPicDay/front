@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import api from '@/app/api/api';
 
-import {format, formatDistanceToNow } from 'date-fns';
+import {format, formatDistanceToNow, parseISO } from 'date-fns';
 
 import { ko } from 'date-fns/locale';
 
@@ -57,17 +57,17 @@ interface UserInfo {
   
 
 interface Comment {
-  id: number;
+  commentId: number;
   user: User;
   name: string;
   text: string;
   createdAt: string;
   replies: Comment[]; 
-  parentId?: number;
+  parentCommentId?: number;
 }
 
 interface CommentResponse {
-  id: number;
+  commentId: number;
   name: string;
   avatar: string;
   date: string;
@@ -104,10 +104,10 @@ export const formatNumber = (num: number | undefined | null): string => {
   return num.toString();
 }; 
 
-export default function DiaryDetail({ diaryId }: { diaryId: string }) {  
+export default function DiaryDetail({ diaryId }: { diaryId: String }) {  
 
 
-
+  
   const [diary, setDiary] = useState<Diary | null>(null);
   const [liked, setLiked] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -151,8 +151,31 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
     async function fetchDiary() {
       try {
         const res = await api.get(`/diaries/${diaryId}`);
-        const data = res.data;
+        const data = res.data; 
+        let {comments } = data ; 
+        let commentList: Comment[] = []; 
+        let replyList: Comment[] = []; 
+        comments.forEach((comment: Comment) => {
+          
+          if(comment.parentCommentId === null) {
+            commentList.push(comment);
+          }
+          else {
+            replyList.push(comment);
+          }
+        });
+        commentList.forEach((comment: Comment) => {
+          let result = replyList.filter((reply: Comment) => reply.parentCommentId === comment.commentId);
+          console.log("result", result);
+          comment.replies = [ ...(comment.replies || []), ...result];
+        });
+        ;
+        
+        console.log("commentList", commentList);
         setDiary(data);
+        setLikeCount(data.likeCount);
+        setLiked(data.liked);
+        setComments(commentList);
       } catch (error) {
         console.error('일기 가져오기 실패', error);
       }
@@ -161,68 +184,50 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
   }, [diaryId]);
 
 
-  // useEffect(() => {
-  
-  //   async function fetchDiary() {
-  //     try {
-  //       const res = await api.get(`/diary/${diary?.id}`); 
-  //       const data = res.data;
+  useEffect(() => {
+    if (scrollToCommentId) {
+      const element = document.getElementById(`comment-${scrollToCommentId}`);
+      element?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      setScrollToCommentId(null); // 스크롤 후 상태 초기화
+    }
+  }, [scrollToCommentId, comments]); // scrollToCommentId나 comments가 변경될 때 실행
 
-  //       setLikeCount(data.count);
-  //       setLiked(data.liked);
-  //     } catch (error) {
-  //       setLikeCount(0);
-  //       setLiked(false);
-  //     }
-  //   }
-
-  //   fetchDiary();
-  // }, []); 
-
-  // useEffect(() => {
+  //  useEffect(() => {
   //   async function fetchCommentsAndReplies() {
-  //     try {
-  //       const res = await api.get(`/comments/${diary?.id}`);
+  //      try {
+  //       const res = await api.get(`/comments/${diaryId}`);
   //       const commentData = res.data.comments || [];
+  //       console.log("commentData", commentData);
   
   //       const formattedComments = commentData.map((comment: Comment) => ({
-  //         ...comment,
+  //          ...comment,
   //         user: { name: comment.user?.name || res.data.name, avatar: comment.user?.avatar || res.data.avatar },
-  //         name: comment.user?.name || res.data.name,
+  //          name: comment.user?.name || res.data.name,
   //         createdAt: formatDate(new Date(comment.createdAt)),
-  //         replies: [] as Comment[],
-  //       }));
+  //          replies: [] as Comment[],
+  //        }));
   
-  //       const replyRes = await api.get(`/replies/${diary?.id}`);
-  //       const replies = replyRes.data.comments || [];
+  //       const replyRes = await api.get(`/replies/${diaryId}`);
+  //        const replies = replyRes.data.comments || [];
   
        
-  //       replies.forEach((reply: Comment) => {
-  //         const parent = formattedComments.find((c: Comment) => c.id === reply.parentId);
+  //        replies.forEach((reply: Comment) => {
+  //           const parent = formattedComments.find((c: Comment) => c.commentId === reply.parentCommentId);
   //         if (parent) {
   //           parent.replies.push(reply);
-  //         }
-  //       });
+  //          }
+  //        });
   
   //       setComments(formattedComments); 
   
-  //     } catch (error) {
-  //       console.error('댓글/대댓글 가져오기 실패', error);
-  //     }
-  //   }
+  //      } catch (error) {
+  //        console.error('댓글/대댓글 가져오기 실패', error);
+  //      }
+  //    }
   
-  //   fetchCommentsAndReplies();
-  // }, [diary]);
+  //    fetchCommentsAndReplies();
+  //  }, [diary]);
   
-  //   useEffect(() => {
-  //     console.log("comments", comments);
-  //   }, [comments]);
-
-
-
-
-   
-
   const handleLikeToggle = () => {
     const nextLiked = !liked; 
     setLiked(nextLiked);
@@ -236,7 +241,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
         const result = await api.post(
           '/diary/like',
           {
-            diaryId: diary?.id,
+            diaryId,
             liked: nextLiked, 
           },
           {
@@ -260,7 +265,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
        respnse = await api.post(
         '/diary/comment',
         {
-          diaryId: diary?.id,
+          diaryId,
           comment: newComment,
         },
         {
@@ -273,7 +278,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
       // 현재 시간을 사용하여 댓글 생성 시간 설정
       const currentTime = new Date();
       const newCommentObj: Comment = {
-        id: respnse.data.id, 
+        commentId: respnse.data.id, 
         user: { name: respnse.data.name, avatar: respnse.data.avatar }, 
         text: newComment,
         createdAt: formatDate(currentTime), // API 응답의 date 대신 현재 시간 사용 
@@ -286,7 +291,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
       setComments(updatedComments);
       setVisibleCommentCount(updatedComments.length);
       setNewComment('');
-      setScrollToCommentId(newCommentObj.id);
+      setScrollToCommentId(newCommentObj.commentId);
     } catch (error) {
       console.error('댓글 전송 실패', error);
     }
@@ -303,7 +308,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
       const reply = await api.post<CommentResponse>(
         '/diary/reply',
         {
-          diaryId: diary?.id,
+          diaryId,
           parentCommentId: parentCommentId,
           comment: replyText,
         },
@@ -313,21 +318,22 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
           },
         }
       );
+     
       const currentTime = new Date();
       
       const newReply: Comment = {
-        id: reply.data.id,
+        commentId: reply.data.commentId,
         user: { name: reply.data.name, avatar: reply.data.avatar },
         text: replyText,
         createdAt: formatDate(currentTime),
         name: reply.data.name,
         replies: [], // Initialize empty replies array
-        parentId: parentCommentId
+        parentCommentId: parentCommentId
       };
 
       // Update comments to include the new reply
       setComments(prev => prev.map(comment => {
-        if (comment.id === parentCommentId) {
+        if (comment.commentId === newReply.parentCommentId) {
           return {
             ...comment,
             replies: [...(comment.replies || []), newReply]
@@ -349,28 +355,27 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
       <div className="w-5 h-5 rounded-full overflow-hidden mr-2 mt-0.5">
         <img
 
-          src={imageErrors.has(reply.id.toString()) ? '/images/cat-king.png' : (reply.user?.avatar || '/images/cat-king.png')}
+          src={imageErrors.has(reply.commentId.toString()) ? '/images/cat-king.png' : (reply.user?.avatar || '/images/cat-king.png')}
           alt={reply.user?.name || '사용자'}
-
           width={20}
           height={20}
           className="object-cover w-full h-full"
           onError={() => {
             const newErrors = new Set(imageErrors);
-            newErrors.add(reply.id.toString());
+            newErrors.add(reply.commentId.toString());
             setImageErrors(newErrors);
           }}
         />
       </div>
       <div className="flex-1">
         <div>
-          <span className="font-semibold mr-1 text-zinc-800 dark:text-zinc-200">{reply.user?.name}</span>
+          <span className="font-semibold mr-1 text-zinc-800 dark:text-zinc-200">{reply.name}</span>
           <span className="text-zinc-700 dark:text-zinc-300">{reply.text}</span>
         </div>
         <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 flex space-x-2">
-          <span>{reply.createdAt}</span>
+           <span>{format(parseISO(reply.createdAt), "yyyy-MM-dd HH:mm:ss")}</span>
           <button 
-            onClick={() => setReplyingTo(replyingTo === reply.id ? null : reply.id)}
+            onClick={() => setReplyingTo(replyingTo === reply.commentId ? null : reply.commentId)}
             className="font-medium hover:underline"
           >
             답글 달기
@@ -380,16 +385,6 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
     </div>
   );
 
-
-
-
-  useEffect(() => {
-    if (scrollToCommentId) {
-      const element = document.getElementById(`comment-${scrollToCommentId}`);
-      element?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      setScrollToCommentId(null); // 스크롤 후 상태 초기화
-    }
-  }, [scrollToCommentId, comments]); // scrollToCommentId나 comments가 변경될 때 실행
 
 
 
@@ -466,7 +461,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
 
             {/* 일기 내용 (본문) */}
             <div className="text-sm text-zinc-800 dark:text-zinc-200 mb-2">
-              <span className="font-semibold mr-1">{author?.nickname}</span>
+              <span className="font-semibold mr-1">{diary?.content}</span>
               {diary?.title}
             </div>
           </div>
@@ -474,9 +469,9 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
           {/* 댓글 목록 - 내부 스크롤 영역에 포함 */}
           <div className="px-4 pb-4 space-y-1.5">
             {comments.slice(0, visibleCommentCount).map((comment) => (
-              <div key={comment.id} id={`comment-${comment.id}`} className="text-sm flex items-start">
+              <div key={comment.commentId} id={`comment-${comment.commentId}`} className="text-sm flex items-start">
                 <div className="w-6 h-6 rounded-full overflow-hidden mr-2 mt-0.5">
-                  <Image
+                  {/* <Image
                     src={imageErrors.has(comment.id.toString()) ? '/images/default-avatar.png' : (comment.user?.avatar || '/images/default-avatar.png')}
                     alt={`${comment.user?.name || '사용자'}의 프로필 이미지`}
                     width={24}
@@ -484,20 +479,20 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
                     className="object-cover w-full h-full"
                     onError={() => {
                         const newErrors = new Set(imageErrors);
-                        newErrors.add(comment.id.toString());
+                        newErrors.add(comment.commentId.toString());
                         setImageErrors(newErrors);
                     }}
-                  />
+                  /> */}
                 </div>
                 <div className="flex-1">
                   <div>
-                    <span className="font-semibold mr-1 text-zinc-800 dark:text-zinc-200">{comment.user?.name}</span>
+                    <span className="font-semibold mr-1 text-zinc-800 dark:text-zinc-200">{comment.name}</span>
                     <span className="text-zinc-700 dark:text-zinc-300">{comment.text}</span>
                   </div>
                   <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 flex space-x-2">
-                    <span>{comment.createdAt}</span>
+                   <span>{format(parseISO(comment.createdAt), "yyyy-MM-dd HH:mm:ss")}</span>
                       <button 
-                        onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                        onClick={() => setReplyingTo(replyingTo === comment.commentId ? null : comment.commentId)}
                         className="font-medium hover:underline"
                       >
                         답글 달기
@@ -508,11 +503,11 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
                     <div className="mt-2 space-y-2">
                       {comment.replies.map((reply: Comment) => (
 
-                        <ReplyComponent key={reply.id} reply={reply} />
+                        <ReplyComponent key={reply.commentId} reply={reply} />
                       ))}
                     </div>
                   )}
-                  {replyingTo === comment.id && (
+                  {replyingTo === comment.commentId && (
                     <div className="mt-2 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-5 h-5 rounded-full overflow-hidden">
@@ -525,11 +520,11 @@ export default function DiaryDetail({ diaryId }: { diaryId: string }) {
                           />
                         </div>
                         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                          {comment.user?.name}님에게 답글 작성 중
+                          {comment.name}님에게 답글 작성 중
                         </span>
                       </div>
                       <form 
-                        onSubmit={(e) => handleReplySubmit(e, comment.id)}
+                            onSubmit={(e) => handleReplySubmit(e, comment.commentId)}
                         className="flex items-center gap-2"
                       >
                         <input

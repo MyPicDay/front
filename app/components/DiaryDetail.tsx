@@ -67,7 +67,7 @@ interface Comment {
 }
 
 interface CommentResponse {
-  commentId: number;
+  id: number;
   name: string;
   avatar: string;
   date: string;

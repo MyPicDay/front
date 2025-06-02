@@ -194,41 +194,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
     }
   }, [scrollToCommentId, comments]); // scrollToCommentId나 comments가 변경될 때 실행
 
-  //  useEffect(() => {
-  //   async function fetchCommentsAndReplies() {
-  //      try {
-  //       const res = await api.get(`/comments/${diaryId}`);
-  //       const commentData = res.data.comments || [];
-  //       console.log("commentData", commentData);
-  
-  //       const formattedComments = commentData.map((comment: Comment) => ({
-  //          ...comment,
-  //         user: { name: comment.user?.name || res.data.name, avatar: comment.user?.avatar || res.data.avatar },
-  //          name: comment.user?.name || res.data.name,
-  //         createdAt: formatDate(new Date(comment.createdAt)),
-  //          replies: [] as Comment[],
-  //        }));
-  
-  //       const replyRes = await api.get(`/replies/${diaryId}`);
-  //        const replies = replyRes.data.comments || [];
-  
-       
-  //        replies.forEach((reply: Comment) => {
-  //           const parent = formattedComments.find((c: Comment) => c.commentId === reply.parentCommentId);
-  //         if (parent) {
-  //           parent.replies.push(reply);
-  //          }
-  //        });
-  
-  //       setComments(formattedComments); 
-  
-  //      } catch (error) {
-  //        console.error('댓글/대댓글 가져오기 실패', error);
-  //      }
-  //    }
-  
-  //    fetchCommentsAndReplies();
-  //  }, [diary]);
+
   
   const handleLikeToggle = () => {
     const nextLiked = !liked; 
@@ -320,7 +286,6 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
         }
       );
      
-      const currentTime = new Date();
       console.log("reply.data" , reply.data)
       
       const newReply: Comment = {

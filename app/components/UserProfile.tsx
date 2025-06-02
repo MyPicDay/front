@@ -7,6 +7,7 @@ import FollowingsListClient from './FollowingsListClient';
 import api from '../api/api';
 import { redirect } from 'next/navigation';
 import { getServerURL } from '@/lib/utils/url';
+import useAuth from './auth/useAuth';
 
 interface Stats {
   userId: string;
@@ -17,6 +18,28 @@ interface Stats {
   followerCount: number;
   followingCount: number;
 }
+interface ApiResponse {
+  userId: string;
+  nickname: string;
+  avatar: string;
+  email: string;
+  diaryCount: number;
+  followerCount: number;
+  followingCount: number;
+  following: boolean;
+}
+const mapApiResponseToStats = (data: ApiResponse): Stats => {
+  return {
+    userId: data.userId,
+    nickname: data.nickname,
+    avatar: data.avatar,
+    email: data.email,
+    diaryCount: data.diaryCount,
+    followerCount: data.followerCount,
+    followingCount: data.followingCount
+  };
+};
+
 
 interface UserProfileProps {
   userId: string;
@@ -26,6 +49,9 @@ export default function UserProfile({userId}: UserProfileProps) {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'diary' | 'followers' | 'followings'>('diary');
+  const [isFollowing, setIsFollowing] = useState<boolean>(false);
+  const [followLoading, setFollowLoading] = useState<boolean>(false);
+  const { user: currentUser, loading: authLoading } = useAuth();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -33,9 +59,11 @@ export default function UserProfile({userId}: UserProfileProps) {
       try {
         const response = await api.get(`${baseUrl}/profiles/${userId}`);
         if (response.status === 200) {
-          const data = response.data;
-          data.avatar = `${baseUrl}/${data.avatar}`;
-          setStats(data);
+          const data = response.data as ApiResponse;
+          const mappedData = mapApiResponseToStats(data);
+          mappedData.avatar = `${baseUrl}/${mappedData.avatar}`;
+          setStats(mappedData);
+          setIsFollowing(data.following ?? false);
         } else {
           redirect('/');
         }
@@ -48,6 +76,39 @@ export default function UserProfile({userId}: UserProfileProps) {
 
     fetchProfile();
   }, [userId]);
+
+  const handleFollowToggle = async () => {
+    const baseUrl = getServerURL();
+    setFollowLoading(true);
+  
+    try {
+      const token = localStorage.getItem('accessToken');
+  
+      if (isFollowing) {
+        // ✅ DELETE 요청 config는 두 번째 인자로만 전달해야 함
+        await api.delete(`${baseUrl}/follow/${userId}`, {
+          withCredentials: true,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        setIsFollowing(false);
+      } else {
+        // ✅ POST는 세 번째 인자가 config
+        await api.post(`${baseUrl}/follow/${userId}`, {}, {
+          withCredentials: true,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        setIsFollowing(true);
+      }
+    } catch (err) {
+      console.error('팔로우/언팔로우 요청 실패:', err);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   if (loading || !stats) {
     return (
@@ -77,6 +138,20 @@ export default function UserProfile({userId}: UserProfileProps) {
           <div className="mt-4 md:mt-0 md:ml-8 text-center md:text-left">
             <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">{stats.nickname}</h1>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">{stats.email}</p>
+
+            <div className="flex items-center space-x-4">
+  {!authLoading && currentUser?.userId !== stats.userId && (
+    <button
+      onClick={handleFollowToggle}
+      disabled={followLoading}
+      className={`px-4 py-1 text-sm rounded-full ${
+        isFollowing ? 'bg-gray-300 text-gray-800' : 'bg-indigo-500 text-white'
+      } hover:opacity-90`}
+    >
+      {isFollowing ? '팔로잉 취소' : '팔로우'}
+    </button>
+  )}
+</div>
             
             {/* 통계 정보 */}
             <div className="flex justify-center md:justify-start space-x-8 mt-4">

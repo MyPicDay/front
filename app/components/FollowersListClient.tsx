@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getServerURL } from '@/lib/utils/url';
 
 interface User {
   id: string;
-  name: string;
+  nickname: string;
   email: string;
   avatar: string;
   isFollowing?: boolean;
@@ -20,10 +21,9 @@ export default function FollowersListClient({ userId }: FollowersListClientProps
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_API_SERVER_URL || process.env.NEXT_PUBLIC_UNIMPLEMENTED_API_SERVER_URL || 'http://localhost:3000';
+    const baseUrl = getServerURL();
 
-    fetch(`${baseUrl}/api/mock/followers/${userId}`)
+    fetch(`${baseUrl}/followings/${userId}`)
       .then(r => r.json())
       .then((data: User[]) => {
         const initialUsers = data.map(user => ({ ...user, isFollowing: true }));
@@ -44,13 +44,10 @@ export default function FollowersListClient({ userId }: FollowersListClientProps
      ));
 
      try {
-       const baseUrl =
-         process.env.NEXT_PUBLIC_API_SERVER_URL || process.env.NEXT_PUBLIC_UNIMPLEMENTED_API_SERVER_URL || 'http://localhost:3000';
-        // TODO: 구현이 끝나면 경로를 변경해주세요
-        // const baseUrl = process.env.NEXT_PUBLIC_API_SERVER_URL;
+       const baseUrl = getServerURL();
 
        const method = currentStatus ? 'DELETE' : 'POST';
-       const response = await fetch(`${baseUrl}/api/mock/users/${targetUserId}/follow`, {
+       const response = await fetch(`${baseUrl}/users/${targetUserId}/followers`, {
           method: method,
        });
 
@@ -100,11 +97,11 @@ export default function FollowersListClient({ userId }: FollowersListClientProps
           <div key={user.id} className="flex items-center space-x-4 p-4 bg-white dark:bg-zinc-900 rounded-lg shadow">
             <img
               src={user.avatar || '/mockups/avatar-placeholder.png'}
-              alt={`${user.name}의 프로필 이미지`}
+              alt={`${user.nickname}의 프로필 이미지`}
               className="w-12 h-12 rounded-full object-cover"
             />
             <div>
-              <h3 className="font-medium text-zinc-900 dark:text-white">{user.name}</h3>
+              <h3 className="font-medium text-zinc-900 dark:text-white">{user.nickname}</h3>
               <p className="text-sm text-zinc-600 dark:text-zinc-400">{user.email}</p>
             </div>
             <button

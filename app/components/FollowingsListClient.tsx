@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getServerURL } from '@/lib/utils/url';
 
 interface User {
   id: string;
-  name: string;
+  nickname: string;
   email: string;
   avatar: string;
   isFollowing?: boolean; // 현재 사용자가 이 유저를 팔로우하는지 여부
@@ -20,13 +21,9 @@ export default function FollowingsListClient({ userId }: FollowingsListClientPro
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_API_SERVER_URL || process.env.NEXT_PUBLIC_UNIMPLEMENTED_API_SERVER_URL || 'http://localhost:3000';
-    // TODO: 구현이 끝나면 경로를 변경해주세요
-    // const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const baseUrl = getServerURL();
 
-    // userId가 팔로우하는 사람들 목록을 가져옴
-    fetch(`${baseUrl}/api/mock/followings/${userId}`)
+    fetch(`${baseUrl}/users/${userId}/followers`)
       .then(r => r.json())
       .then((data: User[]) => {
         // 이 목록의 유저들은 현재 사용자가 '팔로우 중'인 상태이므로 isFollowing: true로 설정
@@ -50,14 +47,13 @@ export default function FollowingsListClient({ userId }: FollowingsListClientPro
      ));
 
      try {
-       const baseUrl =
-         process.env.NEXT_PUBLIC_API_SERVER_URL || process.env.NEXT_PUBLIC_UNIMPLEMENTED_API_SERVER_URL || 'http://localhost:3000';
+       const baseUrl = getServerURL();
        // TODO: 구현이 끝나면 경로를 변경해주세요
        // const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
        // 목업 API 호출 (FollowersListClient와 동일한 엔드포인트 사용)
        const method = currentStatus ? 'DELETE' : 'POST'; // 현재 팔로우 중이면 DELETE(언팔로우), 아니면 POST(팔로우)
-       const response = await fetch(`${baseUrl}/api/mock/users/${targetUserId}/follow`, {
+       const response = await fetch(`${baseUrl}/followings/$`, {
           method: method,
        });
 
@@ -107,11 +103,11 @@ export default function FollowingsListClient({ userId }: FollowingsListClientPro
           <div key={user.id} className="flex items-center space-x-4 p-4 bg-white dark:bg-zinc-900 rounded-lg shadow">
             <img
               src={user.avatar || '/mockups/avatar-placeholder.png'}
-              alt={`${user.name}의 프로필 이미지`}
+              alt={`${user.nickname}의 프로필 이미지`}
               className="w-12 h-12 rounded-full object-cover"
             />
             <div>
-              <h3 className="font-medium text-zinc-900 dark:text-white">{user.name}</h3>
+              <h3 className="font-medium text-zinc-900 dark:text-white">{user.nickname}</h3>
               <p className="text-sm text-zinc-600 dark:text-zinc-400">{user.email}</p>
             </div>
             <button

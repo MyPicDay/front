@@ -42,12 +42,6 @@ const PaperAirplaneIcon = ({ className }: { className?: string }) => (
 );
 
 
-interface User { 
-//  id: string; 
-  name: string;
-  avatar: string;
-}
-
 
 interface UserInfo { 
     id: string; 
@@ -58,12 +52,12 @@ interface UserInfo {
 
 interface Comment {
   commentId: number;
-  user: User;
   name: string;
   text: string;
   createdAt: string;
   replies: Comment[]; 
   parentCommentId?: number;
+  avatar : string 
 }
 
 interface CommentResponse {
@@ -110,49 +104,29 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
   
   const [diary, setDiary] = useState<Diary | null>(null);
   const [liked, setLiked] = useState(false);
-  const [newComment, setNewComment] = useState('');
-  const [visibleCommentCount, setVisibleCommentCount] = useState(3); // 초기에 보여줄 댓글 수
-  const [scrollToCommentId, setScrollToCommentId] = useState<number | null>(null); // 스크롤 대상 댓글 ID 상태
+  const [visibleCommentCount, setVisibleCommentCount] = useState(3);
+  const [scrollToCommentId, setScrollToCommentId] = useState<number | null>(null);
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState('');
   const { author }  = diary  || { id: "dummy", name: '홍길동', avatar: '/images/city-night.png' };
   const [likeCount, setLikeCount] = useState(0);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set()); 
+ 
 
   let timeout: NodeJS.Timeout;
   let respnse : any;
 
-  function formatDate(date: Date) {
-    const d = new Date(date);
-    const now = new Date();
-    
-    // 한국 시간대로 변환 (UTC+9)
-    const kstOffset = 9 * 60 * 60 * 1000; // 9시간을 밀리초로 변환
-    const kstNow = new Date(now.getTime() + kstOffset);
-    const kstDate = new Date(d.getTime() + kstOffset);
-    
-    const diff = Math.max(0, (kstNow.getTime() - kstDate.getTime()) / 1000);
-    
-    
-    // 2시간(7200초) 이내면 "방금 전" 표시
-    if (diff < 7200) {
-      return "방금 전";
-    }
-    // 3일 이내면 상대적 시간 표시
-    if (diff < 60 * 60 * 24 * 3) {
-      return formatDistanceToNow(d, { addSuffix: true, locale: ko });
-    }
-    // 그 외에는 전체 날짜 표시
-    return format(d, 'PPP EEE p', { locale: ko });
-  } 
+
 
   useEffect(() => {
     async function fetchDiary() {
       try {
         const res = await api.get(`/diaries/${diaryId}`);
         const data = res.data; 
+       
         let {comments } = data ; 
+        console.log(data);
         let commentList: Comment[] = []; 
 
         let replyList: Comment[] = []; 
@@ -172,8 +146,6 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
           comment.replies = [ ...(comment.replies || []), ...result];
         });
         ;
-        
-        console.log("commentList", commentList);
         setDiary(data);
         setLikeCount(data.likeCount);
         setLiked(data.liked);
@@ -183,7 +155,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
       }
     }
     fetchDiary();
-  }, [diaryId]);
+  }, []);
 
 
   useEffect(() => {
@@ -194,8 +166,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
     }
   }, [scrollToCommentId, comments]); // scrollToCommentId나 comments가 변경될 때 실행
 
-
-  
+ 
   const handleLikeToggle = () => {
     const nextLiked = !liked; 
     setLiked(nextLiked);
@@ -225,45 +196,40 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
     }, 1000);
   };
 
-  const handleCommentSubmit = async (e: React.FormEvent) => { 
-    e.preventDefault();
-    if (!newComment.trim()) return;  
-   
+  const handleCommentSubmit = async (commentText: string) => {
+    if (!commentText.trim()) return;
+
     try {
-       respnse = await api.post(
+      const response = await api.post(
         '/diary/comment',
         {
           diaryId,
-          comment: newComment,
+          comment: commentText,
         },
         {
           headers: {
             'Content-Type': 'application/json',
           },
-        } 
+        }
       );
 
-      
       const newCommentObj: Comment = {
-        commentId: respnse.data.id, 
-        user: { name: respnse.data.name, avatar: respnse.data.avatar }, 
-        text: newComment,
-        createdAt: respnse.data.date, 
-        name: respnse.data.name,
+        commentId: response.data.id,
+        text: commentText,
+        createdAt: response.data.date,
+        name: response.data.name,
+        avatar: response.data.avatar,
         replies: [],
       };
-      
-      
+
       const updatedComments = [...comments, newCommentObj];
       setComments(updatedComments);
       setVisibleCommentCount(updatedComments.length);
-      setNewComment('');
       setScrollToCommentId(newCommentObj.commentId);
     } catch (error) {
       console.error('댓글 전송 실패', error);
     }
-  }; 
-
+  };
 
   const handleReplySubmit = async (e: React.FormEvent, parentCommentId: number) => {
     
@@ -285,17 +251,16 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
           },
         }
       );
-     
-      console.log("reply.data" , reply.data)
       
       const newReply: Comment = {
 
         commentId: reply.data.id ,
-
-        user: { name: reply.data.name, avatar: reply.data.avatar },
+ 
+  
         text: replyText,
         createdAt: reply.data.date,
         name: reply.data.name,
+        avatar:reply.data.avatar,
         replies: [], // Initialize empty replies array
         parentCommentId: parentCommentId
       };
@@ -319,20 +284,16 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
   };
 
   const ReplyComponent = ({ reply }: { reply: Comment }) => (
- 
+    
     <div className="ml-8 mt-2 flex items-start">
       <div className="w-5 h-5 rounded-full overflow-hidden mr-2 mt-0.5">
-        {/* <img // 주석 내 Image를 img로 변경
-
-          src={imageErrors.has(reply.commentId.toString()) ? '/images/cat-king.png' : (reply.user?.avatar || '/images/cat-king.png')}
-          alt={reply.user?.name || '사용자'}
+        <img
+          src={(reply.avatar || '/images/cat-king.png')}
+          alt={reply.name || '사용자'}
+          width={20}
+          height={20}
           className="object-cover w-full h-full"
-          onError={() => {
-            const newErrors = new Set(imageErrors);
-            newErrors.add(reply.commentId.toString());
-            setImageErrors(newErrors);
-          }}
-        /> */}
+        />
       </div>
       <div className="flex-1">
         <div>
@@ -437,16 +398,14 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
             {comments.slice(0, visibleCommentCount).map((comment) => (
               <div key={comment.commentId} id={`comment-${comment.commentId}`} className="text-sm flex items-start">
                 <div className="w-6 h-6 rounded-full overflow-hidden mr-2 mt-0.5">
-                  {/* <img // 주석 내 Image를 img로 변경
-                    src={imageErrors.has(comment.commentId.toString()) ? '/images/default-avatar.png' : (comment.user?.avatar || '/images/default-avatar.png')}
-                    alt={`${comment.user?.name || '사용자'}의 프로필 이미지`}
+                  <img
+                    key={`avatar-${comment.commentId}`}
+                    src={(comment.avatar || '/images/default-avatar.png')}
+                    alt={`${comment.name || '사용자'}의 프로필 이미지`}
+                    // width={24}
+                    // height={24}
                     className="object-cover w-full h-full"
-                    onError={() => {
-                        const newErrors = new Set(imageErrors);
-                        newErrors.add(comment.commentId.toString());
-                        setImageErrors(newErrors);
-                    }}
-                  /> */}
+                  />
                 </div>
                 <div className="flex-1">
                   <div>
@@ -532,24 +491,41 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
           </div>
         </div>
 
-        {/* 하단 고정 영역: 댓글 입력창 */}
-        <form onSubmit={handleCommentSubmit} className="border-t border-zinc-200 dark:border-zinc-700 p-3 flex items-center bg-white dark:bg-zinc-900">
-          <input
-            type="text"
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="댓글 달기..."
-            className="flex-1 bg-transparent border-none outline-none text-sm text-zinc-700 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-500"
-          />
-          <button
-            type="submit"
-            className="text-sky-500 font-semibold text-sm hover:text-sky-600 disabled:opacity-50"
-            disabled={!newComment.trim()}
-          >
-            게시
-          </button>
-        </form>
+        {/* 댓글 입력 폼 */}
+        <CommentInputForm onSubmit={handleCommentSubmit} />
       </div>
     </main>
+  );
+}
+
+// Separate component for comment input
+function CommentInputForm({ onSubmit }: { onSubmit: (comment: string) => void }) {
+  const [comment, setComment] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (comment.trim()) {
+      onSubmit(comment);
+      setComment('');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="border-t border-zinc-200 dark:border-zinc-700 p-3 flex items-center bg-white dark:bg-zinc-900">
+      <input
+        type="text"
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder="댓글 달기..."
+        className="flex-1 bg-transparent border-none outline-none text-sm text-zinc-700 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-500"
+      />
+      <button
+        type="submit"
+        className="text-sky-500 font-semibold text-sm hover:text-sky-600 disabled:opacity-50"
+        disabled={!comment.trim()}
+      >
+        게시
+      </button>
+    </form>
   );
 }  

@@ -4,9 +4,15 @@ import {useEffect, useState} from 'react';
 import ProfileCalendar from './calendar';
 import FollowersListClient from './FollowersListClient';
 import FollowingsListClient from './FollowingsListClient';
-import useAuthStore from '@/lib/store/authStore';
+import api from '../api/api';
+import { redirect } from 'next/navigation';
+import { getServerURL } from '@/lib/utils/url';
 
 interface Stats {
+  userId: string;
+  nickname: string;
+  avatar: string;
+  email: string;
   diaryCount: number;
   followerCount: number;
   followingCount: number;
@@ -17,26 +23,33 @@ interface UserProfileProps {
 }
 
 export default function UserProfile({userId}: UserProfileProps) {
-  const user = useAuthStore((state) => state.user);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'diary' | 'followers' | 'followings'>('diary');
 
   useEffect(() => {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_API_SERVER_URL || process.env.NEXT_PUBLIC_UNIMPLEMENTED_API_SERVER_URL || 'http://localhost:3000';
-    // TODO: 구현이 끝나면 경로를 변경해주세요
-    // const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const fetchProfile = async () => {
+      const baseUrl = getServerURL();
+      try {
+        const response = await api.get(`${baseUrl}/profiles/${userId}`);
+        if (response.status === 200) {
+          const data = response.data;
+          data.avatar = `${baseUrl}/${data.avatar}`;
+          setStats(data);
+        } else {
+          redirect('/');
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        redirect('/');
+      }
+      setLoading(false);
+    };
 
-    fetch(`${baseUrl}/api/mock/profile/mock-uuid-user-1`)
-      .then(r => r.json())
-      .then(data => {
-        setStats(data.stats);
-        setLoading(false);
-      });
-  }, [user]);
+    fetchProfile();
+  }, [userId]);
 
-  if (loading || !user || !stats) {
+  if (loading || !stats) {
     return (
       <div className="max-w-4xl mx-auto p-8">
         <div className="animate-pulse">
@@ -56,14 +69,14 @@ export default function UserProfile({userId}: UserProfileProps) {
       <div className="mb-8 px-4">
         <div className="flex flex-col items-center md:flex-row md:items-start">
           <img 
-            src={user.avatar || '/mockups/avatar-placeholder.png'} 
-            alt={`${user.nickname}의 프로필 이미지`} 
+            src={stats.avatar || '/mockups/avatar-placeholder.png'} 
+            alt={`${stats.nickname}의 프로필 이미지`} 
             className="w-32 h-32 rounded-full object-cover border-2 border-indigo-500 dark:border-indigo-400 shadow-lg"
           />
           
           <div className="mt-4 md:mt-0 md:ml-8 text-center md:text-left">
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">{user.nickname}</h1>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">{user.email}</p>
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">{stats.nickname}</h1>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">{stats.email}</p>
             
             {/* 통계 정보 */}
             <div className="flex justify-center md:justify-start space-x-8 mt-4">
@@ -86,9 +99,9 @@ export default function UserProfile({userId}: UserProfileProps) {
       
       {/* 캘린더 컴포넌트 */}
       <div className="my-8">
-        {tab === 'diary' && <ProfileCalendar userId={user.id} />}
-          {tab === 'followers' && <FollowersListClient userId={user.id} />}
-          {tab === 'followings' && <FollowingsListClient userId={user.id} />}
+        {tab === 'diary' && <ProfileCalendar userId={stats.userId} />}
+          {tab === 'followers' && <FollowersListClient userId={stats.userId} />}
+          {tab === 'followings' && <FollowingsListClient userId={stats.userId} />}
      
       </div>
     </div>

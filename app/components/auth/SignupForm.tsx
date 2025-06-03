@@ -2,7 +2,6 @@
 
 import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperType } from 'swiper';
 import { Pagination } from 'swiper/modules';
@@ -166,16 +165,16 @@ export default function SignupPage() {
               pagination={{ clickable: true }}
               className="w-full max-w-xs mx-auto mb-6"
             >
-              {fixedCharacters.map((character) => (
+              {fixedCharacters.map((character, index) => (
                 <SwiperSlide key={character.id} className="flex justify-center items-center p-2 pb-8">
                   <div className={`cursor-pointer rounded-lg overflow-hidden border-4 ${selectedCharacterId === character.id ? 'border-amber-500' : 'border-transparent'}`}>
-                    <Image 
+                    <img 
                       src={character.displayImageUrl}
                       alt={`캐릭터 ${character.id}`}
                       width={700} 
                       height={150}
                       className="object-contain"
-                      priority={fixedCharacters.indexOf(character) < 2}
+                      loading={index < 2 ? "eager" : "lazy"}
                     />
                   </div>
                 </SwiperSlide>

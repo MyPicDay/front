@@ -1,5 +1,5 @@
 "use client";
-import Image from "next/image";
+// import Image from "next/image"; // Image import 제거
 
 interface FollowUser {
   id: string;
@@ -21,7 +21,7 @@ export default function FollowList({ title, users, onFollowToggle }: FollowListP
       <ul>
         {users.map((user) => (
           <li key={user.id} className="flex items-center py-3 border-b">
-            <Image
+            <img
               src={user.avatar || "/mockups/avatar-placeholder.png"}
               alt={`${user.name}의 프로필 이미지`}
               width={40}

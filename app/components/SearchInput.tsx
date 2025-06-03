@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import debounce from 'lodash.debounce';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+// import Image from 'next/image'; // Image import 제거
 import { fetchUsers } from '@/app/api/users';
 import type { User } from '@/app/types';
 
@@ -104,12 +104,12 @@ export default function SearchInput() {
                   setShowResults(false);
                 }}
               >
-                <Image
+                <img
                   src={user.profileImageUrl || "/images/city-night.png"}
                   alt={`${user.nickname} 프로필 이미지`}
                   width={32}
                   height={32}
-                  className="rounded-full"
+                  className="rounded-full object-cover"
                 />
                 <span className="text-sm">{highlightMatch(user.nickname, keyword)}</span>
               </li>

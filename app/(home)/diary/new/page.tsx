@@ -334,6 +334,7 @@ export default function DiaryNewPage() {
   }, [searchParams]);
 
   useEffect(() => { 
+    console.log(currentDate)
 
     const fetchDiary = async () => {
       try {
@@ -454,7 +455,7 @@ export default function DiaryNewPage() {
      formData.append('title', title);
      formData.append('content', content);
      formData.append('visibility', visibility);
-     formData.append("date" , yyyyMMdd);
+     formData.append("date" , currentDate);
      uploadedFiles.forEach((file) => {
        formData.append('images', file);
      });

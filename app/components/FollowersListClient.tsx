@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getServerURL } from '@/lib/utils/url';
+import FollowToggleButton from './FollowToggleButton'
 
 interface User {
   id: string;
@@ -104,17 +105,12 @@ export default function FollowersListClient({ userId }: FollowersListClientProps
               <h3 className="font-medium text-zinc-900 dark:text-white">{user.nickname}</h3>
               <p className="text-sm text-zinc-600 dark:text-zinc-400">{user.email}</p>
             </div>
-            <button
-                className={`ml-auto px-4 py-1 rounded border transition ${
-                  user.isFollowing
-                    ? "bg-[#A67C52] text-white border-[#A67C52] hover:bg-[#8B5E34]"
-                    : "bg-white text-[#A67C52] border-[#A67C52] hover:bg-[#F5E9DA]"
-                }`}
-                onClick={() => handleFollowToggle(user.id, user.isFollowing ?? false)}
-                disabled={isUpdating}
-              >
-                {user.isFollowing ? "팔로우 취소" : "팔로우"}
-            </button>
+            <FollowToggleButton
+  userId={user.id}
+  isFollowing={user.isFollowing ?? false}
+  isUpdating={isUpdating}
+  onToggle={(newStatus) => handleFollowToggle(user.id, newStatus)}
+/>
           </div>
         ))}
         {users.length === 0 && !loading && (

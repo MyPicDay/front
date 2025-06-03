@@ -18,6 +18,7 @@ interface Stats {
   followerCount: number;
   followingCount: number;
 }
+
 interface ApiResponse {
   userId: string;
   nickname: string;
@@ -28,6 +29,7 @@ interface ApiResponse {
   followingCount: number;
   following: boolean;
 }
+
 const mapApiResponseToStats = (data: ApiResponse): Stats => {
   return {
     userId: data.userId,
@@ -40,7 +42,6 @@ const mapApiResponseToStats = (data: ApiResponse): Stats => {
   };
 };
 
-
 interface UserProfileProps {
   userId: string;
 }
@@ -51,13 +52,18 @@ export default function UserProfile({userId}: UserProfileProps) {
   const [tab, setTab] = useState<'diary' | 'followers' | 'followings'>('diary');
   const [isFollowing, setIsFollowing] = useState<boolean>(false);
   const [followLoading, setFollowLoading] = useState<boolean>(false);
-  const { user: currentUser, loading: authLoading } = useAuth();
+  const { user: currentUser, loading: authLoading, token } = useAuth();
 
   useEffect(() => {
     const fetchProfile = async () => {
       const baseUrl = getServerURL();
       try {
-        const response = await api.get(`${baseUrl}/profiles/${userId}`);
+        const response = await api.get(`${baseUrl}/profiles/${userId}`, {
+          headers: token ? {
+            Authorization: `Bearer ${token}`,
+          } : undefined,
+        });
+        
         if (response.status === 200) {
           const data = response.data as ApiResponse;
           const mappedData = mapApiResponseToStats(data);
@@ -75,17 +81,19 @@ export default function UserProfile({userId}: UserProfileProps) {
     };
 
     fetchProfile();
-  }, [userId]);
+  }, [userId, token]);
 
   const handleFollowToggle = async () => {
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
     const baseUrl = getServerURL();
     setFollowLoading(true);
   
     try {
-      const token = localStorage.getItem('accessToken');
-  
       if (isFollowing) {
-        // ✅ DELETE 요청 config는 두 번째 인자로만 전달해야 함
         await api.delete(`${baseUrl}/follow/${userId}`, {
           withCredentials: true,
           headers: {
@@ -94,7 +102,6 @@ export default function UserProfile({userId}: UserProfileProps) {
         });
         setIsFollowing(false);
       } else {
-        // ✅ POST는 세 번째 인자가 config
         await api.post(`${baseUrl}/follow/${userId}`, {}, {
           withCredentials: true,
           headers: {
@@ -105,6 +112,7 @@ export default function UserProfile({userId}: UserProfileProps) {
       }
     } catch (err) {
       console.error('팔로우/언팔로우 요청 실패:', err);
+      alert('팔로우/언팔로우 처리 중 오류가 발생했습니다.');
     } finally {
       setFollowLoading(false);
     }
@@ -140,30 +148,30 @@ export default function UserProfile({userId}: UserProfileProps) {
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">{stats.email}</p>
 
             <div className="flex items-center space-x-4">
-  {!authLoading && currentUser?.userId !== stats.userId && (
-    <button
-      onClick={handleFollowToggle}
-      disabled={followLoading}
-      className={`px-4 py-1 text-sm rounded-full ${
-        isFollowing ? 'bg-gray-300 text-gray-800' : 'bg-indigo-500 text-white'
-      } hover:opacity-90`}
-    >
-      {isFollowing ? '팔로잉 취소' : '팔로우'}
-    </button>
-  )}
-</div>
+              {!authLoading && currentUser?.userId !== stats.userId && (
+                <button
+                  onClick={handleFollowToggle}
+                  disabled={followLoading}
+                  className={`px-4 py-1 text-sm rounded-full ${
+                    isFollowing ? 'bg-gray-300 text-gray-800' : 'bg-indigo-500 text-white'
+                  } hover:opacity-90 disabled:opacity-50`}
+                >
+                  {followLoading ? '처리 중...' : isFollowing ? '팔로잉 취소' : '팔로우'}
+                </button>
+              )}
+            </div>
             
             {/* 통계 정보 */}
-            <div className="flex justify-center md:justify-start space-x-8 mt-4">
-              <div className="text-center" onClick={() => setTab('diary')} >
+            <div className="flex justify-around mt-6 space-x-8">
+              <div className="text-center cursor-pointer" onClick={() => setTab('diary')}>
                 <p className="text-2xl font-bold">{stats.diaryCount}</p>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">나의 일기</p>
               </div>
-              <div className="text-center" onClick={() => setTab('followers')}>
+              <div className="text-center cursor-pointer" onClick={() => setTab('followers')}>
                 <p className="text-2xl font-bold">{stats.followerCount}</p>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">팔로워</p>
               </div>
-              <div className="text-center" onClick={() => setTab('followings')}>
+              <div className="text-center cursor-pointer" onClick={() => setTab('followings')}>
                 <p className="text-2xl font-bold">{stats.followingCount}</p>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">팔로잉</p>
               </div>
@@ -175,9 +183,8 @@ export default function UserProfile({userId}: UserProfileProps) {
       {/* 캘린더 컴포넌트 */}
       <div className="my-8">
         {tab === 'diary' && <ProfileCalendar userId={stats.userId} />}
-          {tab === 'followers' && <FollowersListClient userId={stats.userId} />}
-          {tab === 'followings' && <FollowingsListClient userId={stats.userId} />}
-     
+        {tab === 'followers' && <FollowersListClient userId={stats.userId} />}
+        {tab === 'followings' && <FollowingsListClient userId={stats.userId} />}
       </div>
     </div>
   );

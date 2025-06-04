@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 // import Image from 'next/image'; // Image import 제거
 import api from '@/app/api/api';
 
@@ -98,6 +98,35 @@ export const formatNumber = (num: number | undefined | null): string => {
   return num.toString();
 }; 
 
+const ReplyComponent = ({ reply, onReplyClick }: { reply: Comment, onReplyClick: (commentId: number) => void }) => (
+  <div className="ml-8 mt-2 flex items-start">
+    <div className="w-5 h-5 rounded-full overflow-hidden mr-2 mt-0.5">
+      <img
+        src={(reply.avatar || '/images/cat-king.png')}
+        alt={reply.name || '사용자'}
+        width={20}
+        height={20}
+        className="object-cover w-full h-full"
+      />
+    </div>
+    <div className="flex-1">
+      <div>
+        <span className="font-semibold mr-1 text-zinc-800 dark:text-zinc-200">{reply.name}</span>
+        <span className="text-zinc-700 dark:text-zinc-300">{reply.text}</span>
+      </div>
+      <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 flex space-x-2">
+        <span>{format(parseISO(reply.createdAt), "yyyy-MM-dd HH:mm:ss")}</span>
+        <button 
+          onClick={() => onReplyClick(reply.commentId)}
+          className="font-medium hover:underline"
+        >
+          답글 달기
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
 export default function DiaryDetail({ diaryId }: { diaryId: String }) {  
 
 
@@ -120,6 +149,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
 
 
   useEffect(() => {
+   
     async function fetchDiary() {
       try {
         const res = await api.get(`/diaries/${diaryId}`);
@@ -283,38 +313,9 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
     }
   };
 
-  const ReplyComponent = ({ reply }: { reply: Comment }) => (
-    
-    <div className="ml-8 mt-2 flex items-start">
-      <div className="w-5 h-5 rounded-full overflow-hidden mr-2 mt-0.5">
-        <img
-          src={(reply.avatar || '/images/cat-king.png')}
-          alt={reply.name || '사용자'}
-          width={20}
-          height={20}
-          className="object-cover w-full h-full"
-        />
-      </div>
-      <div className="flex-1">
-        <div>
-          <span className="font-semibold mr-1 text-zinc-800 dark:text-zinc-200">{reply.name}</span>
-          <span className="text-zinc-700 dark:text-zinc-300">{reply.text}</span>
-        </div>
-        <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 flex space-x-2">
-           <span>{format(parseISO(reply.createdAt), "yyyy-MM-dd HH:mm:ss")}</span>
-          <button 
-            onClick={() => setReplyingTo(replyingTo === reply.commentId ? null : reply.commentId)}
-            className="font-medium hover:underline"
-          >
-            답글 달기
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-
-
+  const handleReplyClick = useCallback((commentId: number) => {
+    setReplyingTo(replyingTo === commentId ? null : commentId);
+  }, [replyingTo]);
 
   return (
     <main className="bg-zinc-50 dark:bg-zinc-950 min-h-screen py-8">
@@ -415,7 +416,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
                   <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 flex space-x-2">
                    <span>{format(parseISO(comment.createdAt), "yyyy-MM-dd HH:mm:ss")}</span>
                       <button 
-                        onClick={() => setReplyingTo(replyingTo === comment.commentId ? null : comment.commentId)}
+                        onClick={() => handleReplyClick(comment.commentId)}
                         className="font-medium hover:underline"
                       >
                         답글 달기
@@ -425,8 +426,11 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
                   {comment.replies && comment.replies.length > 0  && (
                     <div className="mt-2 space-y-2">
                       {comment.replies.map((reply: Comment) => (
-
-                        <ReplyComponent key={reply.commentId} reply={reply} />
+                        <ReplyComponent 
+                          key={reply.commentId} 
+                          reply={reply} 
+                          onReplyClick={handleReplyClick}
+                        />
                       ))}
                     </div>
                   )}
@@ -435,7 +439,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-5 h-5 rounded-full overflow-hidden">
                           <img
-                            src={author?.avatar || "/images/cat-king.png"} // 현재 사용자 아바타 (임시)
+                            src={comment.avatar || "/images/cat-king.png"} // 현재 사용자 아바타 (임시)
                             alt="Current user"
                             className="object-cover w-full h-full"
                           />

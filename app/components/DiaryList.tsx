@@ -41,15 +41,16 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
   const [comment, setComment] = useState('');
   const [commentCount, setCommentCount] = useState(diary.commentCount ?? 0);
 
-  console.log("diary", diary);
+ 
   useEffect(() => {
-    
+
     async function fetchDiary() {
       try {
         setIsLoading(true);
         const res = await api.get(`/diary/${diary.diaryId}`);
 
         const data = res.data;
+        console.log(data); 
         setLikeCount(data.count);
         setLiked(data.liked);
         
@@ -261,8 +262,9 @@ export default function DiaryList() {
   useEffect(() => {
     const loadDiaries = async () => {
       try {
-
+ 
         const res = await api.get('/diaries');
+        console.log("res" , res);
         if (res?.data) {
           setDiaries([...res.data]);
         } else {

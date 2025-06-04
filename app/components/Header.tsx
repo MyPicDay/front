@@ -1,5 +1,6 @@
 'use client';
 
+import { EventSourcePolyfill } from 'event-source-polyfill';
 import useNotificationStore from '@/lib/store/useNotificationStore';
 import Link from 'next/link';
 import {usePathname, useRouter} from 'next/navigation';
@@ -47,22 +48,48 @@ export default function Header() {
 
 
   // 알림 데이터 가져오기 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const res = await api.get('/notifications/unread');
-        setUnreadCount(res.data.length);
-      } catch (error) {
-        console.error('알림 데이터 가져오기 실패:', error);
-      }
-    };
+useEffect(() => {
+  if (!userId) return;
 
-    fetchNotifications(); // 처음 로딩 시
+  const token = localStorage.getItem('accessToken');
+  if (!token) return;
 
-    const interval = setInterval(fetchNotifications, 30000); // 30초마다 확인
+  const eventSource = new EventSourcePolyfill(`${getServerURL()}/notifications/subscribe`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    heartbeatTimeout: 180000, //3분
+    withCredentials: true, 
+  });
 
-    return () => clearInterval(interval);
-  }, []);
+  eventSource.addEventListener("connect", (event) => {
+    const message = event as MessageEvent;
+    const data = JSON.parse(message.data);
+    const count = parseInt(data, 10);
+    console.log('[연결 성공] 미열람 알림 개수:', data);
+  setUnreadCount(count); 
+});
+
+  eventSource.addEventListener('notification', (event) => {
+    try {
+      const message = event as MessageEvent;
+      const data = JSON.parse(message.data);
+      console.log('SSE 알림 수신:', data);
+      setUnreadCount((prev: number) => prev + 1);
+    } catch (err) {
+      console.error('알림 파싱 오류:', err);
+    }
+  });
+
+  eventSource.onerror = (error: Event) => {
+    console.error('SSE 연결 오류:', error);
+  };
+
+  return () => {
+    eventSource.close();
+  };
+}, [userId]);
+
 
   // 화면 크기 변경 감지
   useEffect(() => {

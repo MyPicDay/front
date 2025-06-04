@@ -40,8 +40,10 @@ export default function NotificationsPage() {
 
   const handleNotificationClick = async (notification: Notification) => {
     try {
-      const response = await api.post(`/notifications/${notification.id}/read`);
+      if (!notification.isread) {
+      await api.post(`/notifications/${notification.id}/read`);
       decreaseUnreadCount();
+    }
     } catch (error) {
       console.error('알림 읽음처리 중 오류 발생:', error);
     }

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import useAuthStore from '@/lib/store/authStore';
 import api from "@/app/api/api";
+import { requestPermissionAndGetToken, onMessageListener } from '@/lib/utils/fcm';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -46,6 +47,28 @@ export default function LoginPage() {
 
       if (token && user) {
         useAuthStore.getState().login(user);
+        // FCM 푸시 토큰 요청 및 서버 등록
+        const fcmToken = await requestPermissionAndGetToken();
+        if (fcmToken) {
+          const deviceId = localStorage.getItem('deviceId');
+          await api.post('/fcm/token', {
+            token: fcmToken,
+            deviceId: deviceId,
+          });
+          console.log('FCM 토큰 서버에 전송 완료');
+        }
+
+        onMessageListener().then((payload) => {
+          console.log("포그라운드 메시지 수신:", payload);
+        });
+
+        try {
+          new Notification('테스트 알림', { body: '테스트입니다.' });
+        } catch (e) {
+          console.error('Notification 생성 중 오류 발생:', e);
+        }
+
+
         setMessage('로그인 성공! 메인 페이지로 이동합니다.');
         setTimeout(() => router.push('/'), 1000);
       }

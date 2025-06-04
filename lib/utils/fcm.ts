@@ -44,7 +44,7 @@ export const requestPermissionAndGetToken = async (): Promise<string | null> => 
       vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY, 
     });
 
-    console.log('FCM 토큰:', token);
+    // console.log('FCM 토큰:', token);
     return token;
   } catch (error) {
     console.error('FCM 토큰 요청 중 오류 발생:', error);
@@ -58,7 +58,7 @@ export const onMessageListener = () =>
     if (!messagingInstance) return;
 
     onMessage(messagingInstance, (payload) => {
-      console.log('포그라운드 알림 수신:', payload);
+      // console.log('포그라운드 알림 수신:', payload);
 
       const notificationTitle = payload.notification?.title || '새 알림';
       const notificationOptions = {

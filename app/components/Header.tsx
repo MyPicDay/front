@@ -46,6 +46,16 @@ export default function Header() {
     }
   };
 
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (typeof window !== 'undefined') {
+        const response = await api.get('/notifications/unread/count', { withCredentials: true });
+        setUnreadCount(response.data);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
 
   // 알림 데이터 가져오기 
 useEffect(() => {
@@ -64,10 +74,6 @@ useEffect(() => {
 
   eventSource.addEventListener("connect", (event) => {
     const message = event as MessageEvent;
-    const data = JSON.parse(message.data);
-    const count = parseInt(data, 10);
-    console.log('[연결 성공] 미열람 알림 개수:', data);
-  setUnreadCount(count); 
 });
 
   eventSource.addEventListener('notification', (event) => {

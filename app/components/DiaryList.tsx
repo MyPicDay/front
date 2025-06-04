@@ -103,7 +103,7 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
       } catch (error) {
         console.error('좋아요 업데이트 실패', error);
       }
-    }, 1000);
+    } );
   }
   
   async function handleCommentSubmit() {

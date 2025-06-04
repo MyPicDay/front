@@ -126,7 +126,7 @@ export default function ProfileCalendarContent({ userId }: ProfileCalendarConten
   const calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin],
     initialView: "dayGridMonth",
-    initialDate: new Date(2025, 4, 1),
+    initialDate: new Date(),
     events: calendarEvents,
     headerToolbar: {
       left: 'prev',

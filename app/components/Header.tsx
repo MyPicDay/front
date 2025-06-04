@@ -1,5 +1,7 @@
 'use client';
 
+import { EventSourcePolyfill } from 'event-source-polyfill';
+import useNotificationStore from '@/lib/store/useNotificationStore';
 import Link from 'next/link';
 import {usePathname, useRouter} from 'next/navigation';
 import {useEffect, useRef, useState} from 'react';
@@ -16,7 +18,7 @@ export default function Header() {
   // TODO: 로그인 후 유저 아이디 가져오기
   const {user} = useAuthStore((state) => state);
   const userId = user?.id;
-  const [hasNotification, setHasNotification] = useState(false);
+  const { unreadCount, setUnreadCount } = useNotificationStore();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   
@@ -45,21 +47,49 @@ export default function Header() {
   };
 
 
-  // 알림 데이터 가져오기 (mock)
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const res = await fetch('/api/mock/notifications');
-        const data = await res.json();
-        // 읽지 않은 알림이 있는지 확인
-        setHasNotification(data.some((notification: any) => !notification.read));
-      } catch (error) {
-        console.error('알림 데이터를 가져오는 중 오류 발생:', error);
-      }
-    };
+  // 알림 데이터 가져오기 
+useEffect(() => {
+  if (!userId) return;
 
-    fetchNotifications();
-  }, []);
+  const token = localStorage.getItem('accessToken');
+  if (!token) return;
+
+  const eventSource = new EventSourcePolyfill(`${getServerURL()}/notifications/subscribe`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    heartbeatTimeout: 180000, //3분
+    withCredentials: true, 
+  });
+
+  eventSource.addEventListener("connect", (event) => {
+    const message = event as MessageEvent;
+    const data = JSON.parse(message.data);
+    const count = parseInt(data, 10);
+    console.log('[연결 성공] 미열람 알림 개수:', data);
+  setUnreadCount(count); 
+});
+
+  eventSource.addEventListener('notification', (event) => {
+    try {
+      const message = event as MessageEvent;
+      const data = JSON.parse(message.data);
+      console.log('SSE 알림 수신:', data);
+      setUnreadCount((prev: number) => prev + 1);
+    } catch (err) {
+      console.error('알림 파싱 오류:', err);
+    }
+  });
+
+  eventSource.onerror = (error: Event) => {
+    console.error('SSE 연결 오류:', error);
+  };
+
+  return () => {
+    eventSource.close();
+  };
+}, [userId]);
+
 
   // 화면 크기 변경 감지
   useEffect(() => {
@@ -150,9 +180,9 @@ export default function Header() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-zinc-700 dark:text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
-              {hasNotification && (
+              {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  1
+                   {unreadCount}
                 </span>
               )}
             </Link>
@@ -204,9 +234,9 @@ export default function Header() {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-zinc-700 dark:text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
-            {hasNotification && (
+            {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                1
+                {unreadCount}
               </span>
             )}
           </Link>

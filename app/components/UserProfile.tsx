@@ -155,7 +155,7 @@ export default function UserProfile({userId}: UserProfileProps) {
                     isFollowing ? 'bg-gray-300 text-gray-800' : 'bg-indigo-500 text-white'
                   } hover:opacity-90 disabled:opacity-50`}
                 >
-                  {followLoading ? '처리 중...' : isFollowing ? '팔로잉 취소' : '팔로우'}
+                  {followLoading ? '처리 중...' : isFollowing ? '팔로우 취소' : '팔로우'}
                 </button>
               )}
             </div>

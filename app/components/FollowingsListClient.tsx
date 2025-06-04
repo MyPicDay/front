@@ -1,10 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getServerURL } from '@/lib/utils/url'; // getServerURL 임포트
+import FollowToggleButton from './FollowToggleButton';
+import api from '@/app/api/api'; // api 임포트
+
 
 interface User {
   id: string;
-  name: string;
+  nickname: string;
   email: string;
   avatar: string;
   isFollowing?: boolean; // 현재 사용자가 이 유저를 팔로우하는지 여부
@@ -20,14 +24,11 @@ export default function FollowingsListClient({ userId }: FollowingsListClientPro
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_API_SERVER_URL || process.env.NEXT_PUBLIC_UNIMPLEMENTED_API_SERVER_URL || 'http://localhost:3000';
-    // TODO: 구현이 끝나면 경로를 변경해주세요
-    // const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    // const baseUrl = getServerURL(); // api 사용으로 제거
 
-    // userId가 팔로우하는 사람들 목록을 가져옴
-    fetch(`${baseUrl}/api/mock/followings/${userId}`)
-      .then(r => r.json())
+    // TODO: API 명세 확인 후 정확한 팔로잉 목록 엔드포인트로 수정 필요
+    api.get(`/users/${userId}/followers`) // 현재는 팔로워 목록 엔드포인트로 되어 있음
+      .then(r => r.data) // axios는 자동으로 json 파싱
       .then((data: User[]) => {
         // 이 목록의 유저들은 현재 사용자가 '팔로우 중'인 상태이므로 isFollowing: true로 설정
         const initialUsers = data.map(user => ({ ...user, isFollowing: true }));
@@ -44,32 +45,24 @@ export default function FollowingsListClient({ userId }: FollowingsListClientPro
   const handleFollowToggle = async (targetUserId: string, currentStatus: boolean) => {
      setIsUpdating(true);
 
-     // 상태를 먼저 업데이트하여 UI에 즉시 반영
+     // 상태를 먼저 업데이트하여 UI에 즉시 반영 (Optimistic update)
      setUsers(users.map(user =>
         user.id === targetUserId ? { ...user, isFollowing: !currentStatus } : user
      ));
 
      try {
-       const baseUrl =
-         process.env.NEXT_PUBLIC_API_SERVER_URL || process.env.NEXT_PUBLIC_UNIMPLEMENTED_API_SERVER_URL || 'http://localhost:3000';
-       // TODO: 구현이 끝나면 경로를 변경해주세요
-       // const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-       // 목업 API 호출 (FollowersListClient와 동일한 엔드포인트 사용)
-       const method = currentStatus ? 'DELETE' : 'POST'; // 현재 팔로우 중이면 DELETE(언팔로우), 아니면 POST(팔로우)
-       const response = await fetch(`${baseUrl}/api/mock/users/${targetUserId}/follow`, {
-          method: method,
-       });
-
-       if (!response.ok) {
-         console.error("Failed to toggle follow status on mock API for followings list");
-         // API 호출 실패 시 상태를 원래대로 되돌림 (롤백)
-         setUsers(users.map(user =>
-            user.id === targetUserId ? { ...user, isFollowing: currentStatus } : user
-         ));
+       // const baseUrl = getServerURL(); // api 사용으로 제거
+       if (currentStatus) { // true이면 현재 팔로우 중 -> 언팔로우 요청
+        // api.delete 호출 시 targetUserId를 사용해야 할 가능성이 높음
+         await api.delete(`/users/${targetUserId}/followers`); 
+       } else { // false이면 현재 언팔로우 중 -> 팔로우 요청
+         await api.post(`/users/${targetUserId}/followers`);
        }
+       // 성공 시 별도 처리 없음 (Optimistic update 유지)
+
      } catch (error) {
-       console.error("Error calling follow toggle mock API for followings list:", error);
+       console.error("Error calling follow toggle API for followings list:", error);
+       // API 호출 실패 시 상태를 원래대로 되돌림 (롤백)
        setUsers(users.map(user =>
           user.id === targetUserId ? { ...user, isFollowing: currentStatus } : user
        ));
@@ -106,24 +99,22 @@ export default function FollowingsListClient({ userId }: FollowingsListClientPro
         {users.map((user) => (
           <div key={user.id} className="flex items-center space-x-4 p-4 bg-white dark:bg-zinc-900 rounded-lg shadow">
             <img
-              src={user.avatar || '/mockups/avatar-placeholder.png'}
-              alt={`${user.name}의 프로필 이미지`}
+              src={user.avatar ? `${getServerURL()}/${user.avatar.startsWith('/') ? user.avatar.substring(1) : user.avatar}` : '/mockups/avatar-placeholder.png'}
+              alt={`${user.nickname}의 프로필 이미지`}
               className="w-12 h-12 rounded-full object-cover"
             />
             <div>
-              <h3 className="font-medium text-zinc-900 dark:text-white">{user.name}</h3>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">{user.email}</p>
+              <h3 className="font-medium text-zinc-900 dark:text-white">{user.nickname}</h3>
             </div>
-            <button
-                className={`ml-auto px-4 py-1 rounded border transition ${                  user.isFollowing
-                    ? "bg-[#A67C52] text-white border-[#A67C52] hover:bg-[#8B5E34]" // 팔로우 중일 때 (팔로우 취소 버튼)
-                    : "bg-white text-[#A67C52] border-[#A67C52] hover:bg-[#F5E9DA]" // 팔로우 안 할 때 (팔로우 버튼)
-                }`}
-                onClick={() => handleFollowToggle(user.id, user.isFollowing ?? false)}
-                disabled={isUpdating}
-              >
-                {user.isFollowing ? "팔로우 취소" : "팔로우"}
-            </button>
+
+
+            <FollowToggleButton
+  userId={user.id}
+  isFollowing={user.isFollowing ?? false}
+  isUpdating={isUpdating}
+  onToggle={(newStatus) => handleFollowToggle(user.id, newStatus)}
+/>
+            
           </div>
         ))}
         {users.length === 0 && !loading && (

@@ -3,6 +3,21 @@
 // import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { UserListProps } from '@/app/types';
+import { getServerURL } from '@/lib/utils/url';
+import FollowToggleButton from './FollowToggleButton'; 
+import { useState } from 'react';
+
+const [followStates, setFollowStates] = useState<{ [key: string]: boolean }>({}); // 팔로우 상태 저장
+
+const handleFollowClick = (e: React.MouseEvent, userId: string, nickname: string) => {
+  e.stopPropagation();
+
+  const current = followStates[userId] ?? false;
+  setFollowStates(prev => ({ ...prev, [userId]: !current }));
+
+  // 실제 API 호출 로직 여기에 추가 가능
+  alert(`${nickname} 님을 ${current ? '언팔로우' : '팔로우'} 하였습니다!`);
+};
 
 export default function UserList({ users, isLoading }: UserListProps) {
   const router = useRouter();

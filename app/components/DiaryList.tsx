@@ -1,7 +1,7 @@
 'use client';
 
 import {useEffect, useState} from 'react';
-import Image from 'next/image';
+// import Image from 'next/image'; // Image import 제거
 import Link from 'next/link';
 import api from '@/app/api/api';
 
@@ -141,12 +141,12 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
       {/* 작성자 정보 */}
       <div className="flex items-center p-4 bg-[#FEF4E4] ">
         <div className="w-10 h-10 rounded-full overflow-hidden mr-3 ">
-          <Image 
+          <img 
             src={profileImage} 
             alt={authorName ?? ""}
             width={40} 
             height={40} 
-            className="object-cover"
+            className="object-cover w-full h-full" // w-full h-full 추가하여 Image fill과 유사하게 동작
           />
         </div>
         <div className="flex-1">
@@ -161,15 +161,14 @@ const DiaryFeedItem = ({ diary }: { diary: Diary }) => {
       
       {/* 이미지 */}
       {/*TODO 일단 이미지1개만 고정 슬라이드 UI로 List형태 받아서 진행 예정*/}
-      <div className="relative w-full">
-          <Image
+      <div className="relative w-full aspect-square"> {/* aspect-square 추가하여 이미지 비율 유지 */} 
+          <img
               src={mainImage}
-              alt={diary?.title}
-              width={500}
-              height={500}
-              className="w-full h-auto object-cover"
+              alt={diary?.title || '일기 이미지'}
+              // width, height 속성은 제거하고 CSS로 크기 조절
+              className="w-full h-full object-cover" // w-full h-full object-cover로 변경
               loading="lazy"
-              priority={false}
+              // priority 속성 제거
           />
       </div>
       

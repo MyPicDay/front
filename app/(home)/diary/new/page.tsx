@@ -21,11 +21,10 @@ const ImageThumbnail = ({ src, index, isSelected, onClick, onRemove }: ImageThum
     onClick={(e) => onClick(index)}
   >
     <div className="w-full aspect-square relative">
-      <Image
+      <img
         src={src}
         alt={`이미지 ${index + 1}`}
-        fill
-        className="object-cover"
+        className="object-cover w-full h-full"
       />
     </div>
     <button
@@ -200,11 +199,10 @@ const ImageGenerator = ({
         </div>
       ) : (
         allImages.length > 0 && (
-          <Image
+          <img
             src={allImages[selectedImageIndex]}
             alt="생성된 이미지"
-            fill
-            className="object-contain rounded-md"
+            className="object-contain rounded-md w-full h-full"
           />
         )
       )}
@@ -336,15 +334,17 @@ export default function DiaryNewPage() {
   }, [searchParams]);
 
   useEffect(() => { 
+    console.log(currentDate)
 
     const fetchDiary = async () => {
       try {
         const res = await api.get(`/diary?date=${currentDate}`);
         const {title, content, status, imagesList} = res.data; 
+        console.log("res.data", res);
         setTitle(title || '');
         setContent(content || '');
         console.log(imagesList);
-        setVisibility(status.toLowerCase() || 'public');
+        setVisibility(status?.toLowerCase() || 'public');
         setImages(imagesList || []);
       } catch (error) {
         console.error('Failed to fetch diary:', error);
@@ -455,7 +455,7 @@ export default function DiaryNewPage() {
      formData.append('title', title);
      formData.append('content', content);
      formData.append('visibility', visibility);
-     formData.append("date" , yyyyMMdd);
+     formData.append("date" , currentDate);
      uploadedFiles.forEach((file) => {
        formData.append('images', file);
      });

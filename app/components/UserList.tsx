@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+// import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { UserListProps } from '@/app/types';
 import { getServerURL } from '@/lib/utils/url';
@@ -49,12 +49,12 @@ export default function UserList({ users, isLoading }: UserListProps) {
               className="flex items-center space-x-4 cursor-pointer rounded-md px-2 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
               onClick={() => router.push(`/profile/${user.userId}`)}
             >
-              <Image
+              <img
                 src={user.profileImageUrl || "/images/city-night.png"}
                 alt={`${user.nickname} 프로필 이미지`}
                 width={40}
                 height={40}
-                className="rounded-full"
+                className="rounded-full object-cover"
               />
               <span className="font-medium text-gray-800 dark:text-white">{user.nickname}</span>
             </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
+// import Image from 'next/image'; // Image import 제거
 import api from '@/app/api/api';
 
 import {format, formatDistanceToNow, parseISO } from 'date-fns';
@@ -287,7 +287,7 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
     
     <div className="ml-8 mt-2 flex items-start">
       <div className="w-5 h-5 rounded-full overflow-hidden mr-2 mt-0.5">
-        <Image
+        <img
           src={(reply.avatar || '/images/cat-king.png')}
           alt={reply.name || '사용자'}
           width={20}
@@ -324,9 +324,9 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
         <div>
           {/* 작성자 정보 */}
           <div className="flex items-center p-3 border-b border-zinc-200 dark:border-zinc-700 bg-[#FEF4E4]">
-            { 
+            {
               author?.avatar && (
-              <Image
+              <img
               src={author?.avatar}
               alt={author?.nickname || '작성자 아바타'}
               width={40}
@@ -352,12 +352,11 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
               >
                 {diary.imageUrls.map((imgSrc, index) => (
                   <SwiperSlide key={index}>
-                    <Image
+                    <img
                       src={imgSrc}
                       alt={`${diary?.title || "일기 이미지"} ${index + 1}`}
-                      layout="fill"
-                      objectFit="cover"
-                      priority={index === 0} // 첫 번째 이미지만 우선 로드
+                      className="w-full h-full object-cover"
+                      loading={index === 0 ? "eager" : "lazy"}
                     />
                   </SwiperSlide>
                 ))}
@@ -399,12 +398,12 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
             {comments.slice(0, visibleCommentCount).map((comment) => (
               <div key={comment.commentId} id={`comment-${comment.commentId}`} className="text-sm flex items-start">
                 <div className="w-6 h-6 rounded-full overflow-hidden mr-2 mt-0.5">
-                  <Image
+                  <img
                     key={`avatar-${comment.commentId}`}
                     src={(comment.avatar || '/images/default-avatar.png')}
                     alt={`${comment.name || '사용자'}의 프로필 이미지`}
-                    width={24}
-                    height={24}
+                    // width={24}
+                    // height={24}
                     className="object-cover w-full h-full"
                   />
                 </div>
@@ -435,11 +434,9 @@ export default function DiaryDetail({ diaryId }: { diaryId: String }) {
                     <div className="mt-2 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-5 h-5 rounded-full overflow-hidden">
-                          <Image
-                            src={comment.avatar || "/images/cat-king.png"} // 현재 사용자 아바타 (임시)
+                          <img
+                            src={author?.avatar || "/images/cat-king.png"} // 현재 사용자 아바타 (임시)
                             alt="Current user"
-                            width={20}
-                            height={20}
                             className="object-cover w-full h-full"
                           />
                         </div>

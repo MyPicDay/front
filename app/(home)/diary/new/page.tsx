@@ -21,11 +21,10 @@ const ImageThumbnail = ({ src, index, isSelected, onClick, onRemove }: ImageThum
     onClick={(e) => onClick(index)}
   >
     <div className="w-full aspect-square relative">
-      <Image
+      <img
         src={src}
         alt={`이미지 ${index + 1}`}
-        fill
-        className="object-cover"
+        className="object-cover w-full h-full"
       />
     </div>
     <button
@@ -200,11 +199,10 @@ const ImageGenerator = ({
         </div>
       ) : (
         allImages.length > 0 && (
-          <Image
+          <img
             src={allImages[selectedImageIndex]}
             alt="생성된 이미지"
-            fill
-            className="object-contain rounded-md"
+            className="object-contain rounded-md w-full h-full"
           />
         )
       )}

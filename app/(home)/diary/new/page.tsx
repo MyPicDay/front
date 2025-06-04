@@ -458,6 +458,13 @@ export default function DiaryNewPage() {
      formData.append('content', content);
      formData.append('visibility', visibility);
      formData.append("date" , currentDate);
+
+     // 현재 선택된 이미지가 AI 생성 이미지인지 확인하고, 맞다면 FormData에 추가
+     if (images.length > 0) {
+       // allImages[selectedImageIndex]는 images 배열에서 온 것이 확실하므로, 이 URL을 전송합니다.
+       formData.append('aiGeneratedImage', images[0]);
+     }
+
      uploadedFiles.forEach((file) => {
        formData.append('images', file);
      });
@@ -469,9 +476,7 @@ export default function DiaryNewPage() {
     });
     // 실제 구현에서는 여기서 최종 저장 API를 호출합니다
     alert('일기가 저장되었습니다!');
-    router.push(`/calendar/${result.data.id}`);
-
-    // 실제 구현에서는 여기서 최종 저장 API를 호출합니다
+    router.push(`/calendar/${result.data.id}`); 
 
   };
 

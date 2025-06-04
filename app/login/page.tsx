@@ -62,13 +62,6 @@ export default function LoginPage() {
           console.log("포그라운드 메시지 수신:", payload);
         });
 
-        try {
-          new Notification('테스트 알림', { body: '테스트입니다.' });
-        } catch (e) {
-          console.error('Notification 생성 중 오류 발생:', e);
-        }
-
-
         setMessage('로그인 성공! 메인 페이지로 이동합니다.');
         setTimeout(() => router.push('/'), 1000);
       }

@@ -367,20 +367,20 @@ export default function DiaryNewPage() {
     setIsGeneratingImage(true);
     
     try {
-      // 실제 구현에서는 여기서 API로 데이터를 전송합니다
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // 실제 AI 이미지 생성 API 호출
+      const response = await api.post('/diary/ai/generate', { content });
+      const imageUrl = response.data; // API 응답에서 이미지 URL 추출
       
-      // 서버로부터 이미지를 받았다고 가정합니다 (한 장만 받음)
-      const mockImages = [
-        '/images/cat-king.png',
-      ];
-      
-      setImages(mockImages);
-      setIsGeneratingImage(false);
+      // API가 단일 URL을 반환한다고 가정하고, 이를 배열로 만듭니다.
+      // 만약 API가 여러 이미지 URL을 배열로 반환한다면, response.data를 직접 사용합니다.
+      setImages(imageUrl ? [imageUrl] : []); 
     } catch (error) {
-      console.error('일기 저장 중 오류 발생:', error);
-      setIsGeneratingImage(false);
+      console.error('AI 이미지 생성 중 오류 발생 (handleSubmitForm):', error);
+      // 사용자에게 오류 메시지를 표시할 수 있습니다.
+      // 예: alert('이미지 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      setImages([]); // 오류 발생 시 생성된 이미지 목록을 비웁니다.
     } finally {
+      setIsGeneratingImage(false);
       setIsLoading(false);
     }
   };
@@ -389,21 +389,23 @@ export default function DiaryNewPage() {
     setIsGeneratingImage(true);
     
     try {
-      // 기존 이미지 초기화 (사용자가 업로드한 이미지도 초기화할지 여부는 요구사항에 따라 달라질 수 있음)
+      // 기존 이미지 및 선택 초기화
       setImages([]);
-      setSelectedImageIndex(0);
+      // 사용자가 직접 업로드한 이미지(uploadPreviews, uploadedFiles)는 유지합니다.
+      setSelectedImageIndex(0); 
       
-      // 새 이미지 생성 요청
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // 서버로부터 새로운 이미지를 받았다고 가정
-      const newMockImages = [
-        '/images/cat-king.png',
-      ];
-      
-      setImages(newMockImages);
+      // AI 이미지 생성 API 호출
+      const response = await api.post('/diary/ai/generate', { content }); // 'content' 상태 사용
+      const imageUrl = response.data; // API 응답에서 이미지 URL 추출
+
+      // API가 단일 URL을 반환한다고 가정합니다.
+      // 만약 API가 여러 이미지 URL을 배열로 반환한다면, response.data를 직접 사용합니다.
+      setImages(imageUrl ? [imageUrl] : []);
     } catch (error) {
-      console.error('이미지 재생성 중 오류 발생:', error);
+      console.error('AI 이미지 재생성 중 오류 발생:', error);
+      // 사용자에게 오류 메시지를 표시하는 것을 고려할 수 있습니다.
+      // 예: alert('이미지 재생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      setImages([]); // 오류 발생 시 생성된 이미지 목록을 비웁니다.
     } finally {
       setIsGeneratingImage(false);
     }

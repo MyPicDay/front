@@ -145,7 +145,6 @@ export default function UserProfile({userId}: UserProfileProps) {
           
           <div className="mt-4 md:mt-0 md:ml-8 text-center md:text-left">
             <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">{stats.nickname}</h1>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">{stats.email}</p>
 
             <div className="flex items-center space-x-4">
               {!authLoading && currentUser?.userId !== stats.userId && (
